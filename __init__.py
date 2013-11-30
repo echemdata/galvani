@@ -1,1 +1,1 @@
-from .BioLogic import MPTfile
+from .BioLogic import MPTfile, MPRfile

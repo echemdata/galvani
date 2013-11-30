@@ -5,6 +5,7 @@ __all__ = ['MPTfileCSV', 'MPTfile']
 
 import re
 import csv
+from os import SEEK_SET, SEEK_CUR
 
 import numpy as np
 
@@ -28,7 +29,7 @@ def fieldname_to_dtype(fieldname):
         return ("control/V/mA", np.float_)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
-
+        
 
 def MPTfile(file_or_path):
     """Opens .mpt files as numpy record arrays
@@ -119,3 +120,77 @@ def MPTfileCSV(file_or_path):
         raise ValueError("Unrecognised headers for MPT file format")
 
     return mpt_csv, comments
+
+
+VMPmodule_hdr = np.dtype([('shortname', 'S10'),
+                          ('longname', 'S25'),
+                          ('length', '<u8'),
+                          ('date', 'S8')])
+VMPdata_dtype = np.dtype([('flags', 'u1'),
+                          ("time/s", '<f8'),
+                          ("control/V/mA", '<f4'),
+                          ("Ewe/V", '<f4'),
+                          ("dQ/mA.h", '<f8'),
+                          ("P/W", '<f4')])
+
+
+def read_VMP_modules(fileobj, read_module_data=True):
+    """Reads in module headers in the VMPmodule_hdr format. Yields a dict with
+    the headers and offset for each module.
+
+    N.B. the offset yielded is the offset to the start of the data i.e. after
+    the end of the header. The data runs from (offset) to (offset+length)"""
+    while True:
+        module_magic = fileobj.read(len(b'MODULE'))
+        if len(module_magic) == 0:  # end of file
+            raise StopIteration
+        elif module_magic != b'MODULE':
+            raise ValueError("Found %r, expecting start of new VMP MODULE" % module_magic)
+
+        hdr_bytes = fileobj.read(VMPmodule_hdr.itemsize)
+        if len(hdr_bytes) < VMPmodule_hdr.itemsize:
+            raise IOError("Unexpected end of file while reading module header")
+
+        hdr = np.fromstring(hdr_bytes, dtype=VMPmodule_hdr, count=1)
+        hdr_dict = dict(((n, hdr[n][0]) for n in VMPmodule_hdr.names))
+        hdr_dict['offset'] = fileobj.tell()
+        if read_module_data:
+            hdr_dict['data'] = fileobj.read(hdr_dict['length'])
+            if len(hdr_dict['data']) != hdr_dict['length']:
+                raise IOError("""Unexpected end of file while reading data
+                    current module: %s
+                    length read: %d
+                    length expected: %d""" % (hdr_dict['longname'],
+                                              len(hdr_dict['data']),
+                                              hdr_dict['length']))
+            yield hdr_dict
+        else:
+            yield hdr_dict
+            fileobj.seek(hdr_dict['offset'] + hdr_dict['length'], SEEK_SET)
+
+
+class MPRfile:
+    """Bio-Logic .mpr file
+
+    The file format is not specified anywhere and has therefore been reverse
+    engineered. Not all the fields are known.
+    """
+
+    def __init__(self, file_or_path):
+        if isinstance(file_or_path, str):
+            mpr_file = open(file_or_path, 'rb')
+        else:
+            mpr_file = file_or_path
+
+        mpr_magic = b'BIO-LOGIC MODULAR FILE\x1a                         \x00\x00\x00\x00'
+        magic = mpr_file.read(len(mpr_magic))
+        if magic != mpr_magic:
+            raise ValueError('Invalid magic for .mpr file: %s' % magic)
+
+        modules = list(read_VMP_modules(mpr_file))
+        self.modules = modules
+        data_module, = (m for m in modules if m['shortname'] == b'VMP data  ')
+
+        ## There is 100 bytes of data before the main array starts
+        self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
+                                  offset=100)
