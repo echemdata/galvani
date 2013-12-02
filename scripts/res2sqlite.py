@@ -1,0 +1,430 @@
+#!/usr/bin/python
+
+import subprocess as sp
+import sqlite3
+import sys
+import re
+import csv
+
+input_filename = sys.argv[1]
+if len(sys.argv) > 2:
+    output_filename = sys.argv[2]
+else:
+    output_filename = input_filename.replace('.res', '.res3')
+
+s3db = sqlite3.connect(output_filename)
+
+
+## The following scripts are adapted from the result of running
+## $ mdb-schema <result.res> oracle
+
+mdb_tables = ["Version_Table", "Global_Table", "Resume_Table",
+              "Channel_Normal_Table", "Channel_Statistic_Table",
+              "Auxiliary_Table", "Event_Table",
+              "Smart_Battery_Info_Table", "Smart_Battery_Data_Table"]
+           
+mdb_tables_text = ["Version_Table", "Global_Table", "Event_Table", 
+                   "Smart_Battery_Info_Table"]
+mdb_tables_numeric = ["Resume_Table", "Channel_Normal_Table",
+                "Channel_Statistic_Table", "Auxiliary_Table",
+                "Smart_Battery_Data_Table", 'MCell_Aci_Data_Table',
+                'Aux_Global_Data_Table', 'Smart_Battery_Clock_Stretch_Table']
+
+mdb_5_23_tables = ['MCell_Aci_Data_Table', 'Aux_Global_Data_Table',
+                   'Smart_Battery_Clock_Stretch_Table']
+
+mdb_create_scripts = {
+    "Version_Table": """
+CREATE TABLE Version_Table
+ (
+    Version_Schema_Field    TEXT,
+    Version_Comments_Field  TEXT
+); """,
+    "Global_Table": """
+CREATE TABLE Global_Table
+ (
+    Test_ID                         INTEGER PRIMARY KEY,
+    Test_Name                       TEXT,
+    Channel_Index                   INTEGER,
+    Start_DateTime                  REAL,
+    DAQ_Index                       INTEGER,
+    Channel_Type                    INTEGER,
+    Creator                         TEXT,
+    Comments                        TEXT,
+    Schedule_File_Name              TEXT,
+    Channel_Number                  INTEGER,
+    Mapped_Aux_Voltage_Number       INTEGER,
+    Mapped_Aux_Temperature_Number   INTEGER,
+    Mapped_Aux_Pressure_Number      INTEGER,
+    Mapped_Aux_PH_Number            INTEGER,
+    Mapped_Aux_Flow_Rate_CNumber    INTEGER,
+    Applications_Path               TEXT,
+    Log_ChanStat_Data_Flag          INTEGER,
+    Log_Aux_Data_Flag               INTEGER,
+    Log_Event_Data_Flag             INTEGER,
+    Log_Smart_Battery_Data_Flag     INTEGER,
+    Item_ID                         TEXT,
+  -- Version 1.14 ends here, version 5.23 continues
+    Mapped_Aux_Conc_CNumber         INTEGER DEFAULT NULL,
+    Mapped_Aux_DI_CNumber           INTEGER DEFAULT NULL,
+    Mapped_Aux_DO_CNumber           INTEGER DEFAULT NULL
+); """,
+    "Resume_Table": """
+CREATE TABLE Resume_Table
+ (
+    Test_ID         INTEGER REFERENCES Global_Table(Test_ID),
+    Step_Index      INTEGER,
+    Cycle_Index     INTEGER,
+    Channel_Status  INTEGER,
+    Test_Time       REAL,
+    Step_Time       REAL,
+    CCapacity       REAL,
+    DCapacity       REAL,
+    CEnergy         REAL,
+    DEnergy         REAL,
+    TC_Time1        REAL,
+    TC_Time2        REAL,
+    TC_Time3        REAL,
+    TC_Time4        REAL,
+    TC_CCapacity1   REAL,
+    TC_CCapacity2   REAL,
+    TC_DCapacity1   REAL,
+    TC_DCapacity2   REAL,
+    TC_CEnergy1     REAL,
+    TC_CEnergy2     REAL,
+    TC_DEnergy1     REAL,
+    TC_DEnergy2     REAL,
+    MV_Counter1     REAL,
+    MV_Counter2     REAL,
+    MV_Counter3     REAL,
+    MV_Counter4     REAL,
+  -- Version 1.14 ends here, version 5.23 continues
+    Charge_Time     REAL DEFAULT NULL,
+    Discharge_Time  REAL DEFAULT NULL
+); """,
+    "Channel_Normal_Table": """
+CREATE TABLE Channel_Normal_Table
+ (
+    Test_ID                 INTEGER REFERENCES Global_Table(Test_ID),
+    Data_Point              INTEGER,
+    Test_Time               REAL,
+    Step_Time               REAL,
+    DateTime                REAL,
+    Step_Index              INTEGER,
+    Cycle_Index             INTEGER,
+    Is_FC_Data              INTEGER,
+    Current                 REAL,
+    Voltage                 REAL,
+    Charge_Capacity         REAL,
+    Discharge_Capacity      REAL,
+    Charge_Energy           REAL,
+    Discharge_Energy        REAL,
+    "dV/dt"                 REAL,
+    Internal_Resistance     REAL,
+    AC_Impedance            REAL,
+    ACI_Phase_Angle         REAL
+); """,
+    "Channel_Statistic_Table": """
+CREATE TABLE Channel_Statistic_Table
+ (
+    Test_ID                 INTEGER,
+    Data_Point              INTEGER,
+    Vmax_On_Cycle           REAL,
+  -- Version 1.14 ends here, version 5.23 continues
+    Charge_Time             REAL DEFAULT NULL,
+    Discharge_Time          REAL DEFAULT NULL,
+    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+); """,
+    "Auxiliary_Table": """
+CREATE TABLE Auxiliary_Table
+ (
+    Test_ID                 INTEGER,
+    Data_Point              INTEGER,
+    Auxiliary_Index         INTEGER,
+    Data_Type               INTEGER,
+    X                       REAL,
+    "dX/dt"                 REAL,
+    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+); """,
+    "Event_Table": """
+CREATE TABLE Event_Table
+ (
+    Test_ID                 INTEGER REFERENCES Global_Table(Test_ID),
+    DateTime                REAL,
+    Test_Time               REAL,
+    Event_Type              INTEGER,
+    Event_Describe          TEXT
+); """,
+    "Smart_Battery_Info_Table":  """
+CREATE TABLE Smart_Battery_Info_Table
+ (
+    Test_ID                 INTEGER REFERENCES Global_Table(Test_ID),
+    ManufacturerDate        REAL,
+    ManufacturerAccess      TEXT,
+    SpecificationInfo       TEXT,
+    FullChargeCapacity      REAL,
+    ChargingCurrent         REAL,
+    ChargingVoltage         REAL,
+    DesignCapacity          REAL,
+    DesignVoltage           REAL,
+    SerialNumber            INTEGER,
+    ManufacturerName        TEXT,
+    DeviceName              TEXT,
+    DeviceChemistry         TEXT,
+    ManufacturerData        TEXT,
+  -- Version 1.14 ends here, version 5.23 continues
+    Frequency               INTEGER DEFAULT NULL
+); """,
+    "Smart_Battery_Data_Table": """
+CREATE TABLE Smart_Battery_Data_Table
+ (
+    Test_ID                 INTEGER,
+    Data_Point              INTEGER,
+    RemainingCapacityAlarm  REAL,
+    RemainingTimeAlarm      INTEGER,
+    BatteryMode             INTEGER,
+    AtRate                  REAL,
+    AtRateTimeToFull        INTEGER,
+    AtRateTimeToEmpty       INTEGER,
+    AtRateOK                INTEGER,
+    Temperature             REAL,
+    Voltage                 REAL,
+    Current                 REAL,
+    AverageCurrent          REAL,
+    MaxError                INTEGER,
+    RelativeStateOfCharge   INTEGER,
+    AbsoluteStateOfCharge   INTEGER,
+    RemainingCapacity       REAL,
+    RunTimeToEmpty          INTEGER,
+    AverageTimeToEmpty      INTEGER,
+    AverageTimeToFull       INTEGER,
+    BatteryStatus           INTEGER,
+    CycleCount              INTEGER,
+  -- Version 1.14 ends here, version 5.23 continues
+    Pack_Status             INTEGER DEFAULT NULL,
+    Pack_Configuration      INTEGER DEFAULT NULL,
+    VCELL4                  REAL DEFAULT NULL,
+    VCELL3                  REAL DEFAULT NULL,
+    VCELL2                  REAL DEFAULT NULL,
+    VCELL1                  REAL DEFAULT NULL,
+    ManufacturerAccess      TEXT DEFAULT NULL,
+    FullChargeCapacity      REAL DEFAULT NULL,
+    BroadCast               INTEGER DEFAULT NULL,
+    GPIO1                   INTEGER DEFAULT NULL,
+    GPIO2                   INTEGER DEFAULT NULL,
+    OptVCELL4               REAL DEFAULT NULL,
+    OptVCELL3               REAL DEFAULT NULL,
+    OptVCELL2               REAL DEFAULT NULL,
+    OptVCELL1               REAL DEFAULT NULL,
+    OMF1                    INTEGER DEFAULT NULL,
+    OMF2                    INTEGER DEFAULT NULL,
+    OMF3                    INTEGER DEFAULT NULL,
+    OMF4                    INTEGER DEFAULT NULL,
+    OMF5                    INTEGER DEFAULT NULL,
+    FTEMP                   INTEGER DEFAULT NULL,
+    STATUS                  INTEGER DEFAULT NULL,
+    FET_TEMP                INTEGER DEFAULT NULL,
+    ChargingCurrent         REAL DEFAULT NULL,
+    ChargingVoltage         REAL DEFAULT NULL,
+    ManufacturerData        REAL DEFAULT NULL,
+    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+); """,
+    ## The following tables are not present in version 1.14
+    'MCell_Aci_Data_Table': """
+CREATE TABLE MCell_Aci_Data_Table
+ (
+    Test_ID			INTEGER,
+    Data_Point		INTEGER,
+    Cell_Index		INTEGER,
+    ACI			REAL,
+    Phase_Shift		REAL,
+    Voltage			REAL,
+    Current			REAL,
+    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+);""",
+    'Aux_Global_Data_Table': """
+CREATE TABLE Aux_Global_Data_Table
+ (
+    Channel_Index		INTEGER,
+    Auxiliary_Index	INTEGER,
+    Data_Type		INTEGER,
+    Nickname		TEXT,
+    Unit			TEXT
+);""",
+    'Smart_Battery_Clock_Stretch_Table': """
+CREATE TABLE Smart_Battery_Clock_Stretch_Table
+ (
+    Test_ID			    INTEGER,
+    Data_Point		    INTEGER,
+    ManufacturerAccess	    INTEGER,
+    RemainingCapacityAlarm INTEGER,
+    RemainingTimeAlarm	    INTEGER,
+    BatteryMode		    INTEGER,
+    AtRate			    INTEGER,
+    AtRateTimeToFull	    INTEGER,
+    AtRateTimeToEmpty	    INTEGER,
+    AtRateOK		    INTEGER,
+    Temperature		    INTEGER,
+    Voltage			    INTEGER,
+    Current			    INTEGER,
+    AverageCurrent         INTEGER,
+    MaxError		    INTEGER,
+    RelativeStateOfCharge  INTEGER,
+    AbsoluteStateOfCharge  INTEGER,
+    RemainingCapacity	    INTEGER,
+    FullChargeCapacity	    INTEGER,
+    RunTimeToEmpty	    INTEGER,
+    AverageTimeToEmpty	    INTEGER,
+    AverageTimeToFull	    INTEGER,
+    ChargingCurrent	    INTEGER,
+    ChargingVoltage	    INTEGER,
+    BatteryStatus		    INTEGER,
+    CycleCount		    INTEGER,
+    DesignCapacity	    INTEGER,
+    DesignVoltage		    INTEGER,
+    SpecificationInfo	    INTEGER,
+    ManufacturerDate	    INTEGER,
+    SerialNumber		    INTEGER,
+    ManufacturerName	    INTEGER,
+    DeviceName		    INTEGER,
+    DeviceChemistry	    INTEGER,
+    ManufacturerData	    INTEGER,
+    Pack_Status		    INTEGER,
+    Pack_Configuration	    INTEGER,
+    VCELL4			    INTEGER,
+    VCELL3			    INTEGER,
+    VCELL2			    INTEGER,
+    VCELL1			    INTEGER,
+    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+);"""}
+
+mdb_create_indices = {
+    "Channel_Normal_Table": """
+CREATE UNIQUE INDEX data_point_index ON Channel_Normal_Table (Test_ID, Data_Point);
+CREATE INDEX voltage_index ON Channel_Normal_Table (Test_ID, Voltage);
+CREATE INDEX test_time_index ON Channel_Normal_Table (Test_ID, Test_Time);
+"""}
+
+helper_table_script = """
+CREATE TEMPORARY TABLE capacity_helper(
+    Test_ID			    INTEGER NOT NULL,
+    Cycle_Index		    INTEGER NOT NULL,
+    Charge_Capacity        REAL NOT NULL,
+    Discharge_Capacity     REAL NOT NULL,
+    Charge_Energy          REAL NOT NULL,
+    Discharge_Energy       REAL NOT NULL,
+    FOREIGN KEY (Test_ID, Cycle_Index) REFERENCES Channel_Normal_Table (Test_ID, Cycle_Index)
+);
+
+INSERT INTO capacity_helper 
+    SELECT Test_ID, Cycle_Index, max(Charge_Capacity), max(Discharge_Capacity), max(Charge_Energy), max(Discharge_Energy) 
+        FROM Channel_Normal_Table 
+        GROUP BY Test_ID, Cycle_Index;
+
+-- ## Alternative way of selecting ##        
+-- select * 
+--     from Channel_Normal_Table as a join Channel_Normal_Table as b 
+--         on (a.Test_ID = b.Test_ID and a.Data_Point = b.Data_Point + 1 
+--              and a.Charge_Capacity < b.Charge_Capacity);
+
+DROP TABLE IF EXISTS Capacity_Sum_Table;
+CREATE TABLE Capacity_Sum_Table(
+    Test_ID			    INTEGER NOT NULL,
+    Cycle_Index		    INTEGER NOT NULL,
+    Charge_Capacity_Sum    REAL NOT NULL,
+    Discharge_Capacity_Sum REAL NOT NULL,
+    Charge_Energy_Sum      REAL NOT NULL,
+    Discharge_Energy_Sum   REAL NOT NULL,
+    FOREIGN KEY (Test_ID, Cycle_Index) REFERENCES Channel_Normal_Table (Test_ID, Cycle_Index)
+);
+
+INSERT INTO Capacity_Sum_Table 
+    SELECT a.Test_ID, a.Cycle_Index, total(b.Charge_Capacity), total(b.Discharge_Capacity), total(b.Charge_Energy), total(b.Discharge_Energy) 
+        FROM capacity_helper AS a LEFT JOIN capacity_helper AS b 
+            ON (a.Test_ID = b.Test_ID AND a.Cycle_Index > b.Cycle_Index)
+        GROUP BY a.Test_ID, a.Cycle_Index;
+        
+DROP TABLE capacity_helper;
+
+CREATE VIEW IF NOT EXISTS Capacity_View
+    AS SELECT Test_ID, Data_Point, Test_Time, Step_Time, DateTime,
+              Step_Index, Cycle_Index, Current, Voltage, "dV/dt",
+              Discharge_Capacity + Discharge_Capacity_Sum - Charge_Capacity - Charge_Capacity_Sum AS Net_Capacity,
+              Discharge_Capacity + Discharge_Capacity_Sum + Charge_Capacity + Charge_Capacity_Sum AS Gross_Capacity,
+              Discharge_Energy + Discharge_Energy_Sum - Charge_Energy - Charge_Energy_Sum AS Net_Energy,
+              Discharge_Energy + Discharge_Energy_Sum + Charge_Energy + Charge_Energy_Sum AS Gross_Energy
+        FROM Channel_Normal_Table NATURAL JOIN Capacity_Sum_Table;
+"""
+
+insert_re = re.compile(r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n', re.I)
+
+
+def mdb_get_data_text(filename, table):
+    print "Reading %s..." % table
+    try:
+        mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
+                           bufsize=-1, stdin=None, stdout=sp.PIPE)
+        mdb_output = mdb_sql.stdout.read()
+        while len(mdb_output) > 0:
+            insert_match = insert_re.match(mdb_output)
+            s3db.execute(insert_match.group())
+            mdb_output = mdb_output[insert_match.end():]
+        s3db.commit()
+    except:
+        print "Error while importing %s" % table
+        print "Remaining mdb-export output: " + mdb_output
+        if insert_match:
+            print "insert_re match: " + insert_match
+        raise
+    finally:
+        mdb_sql.terminate()
+
+
+def mdb_get_data_numeric(filename, table):
+    print "Reading %s..." % table
+    try:
+        mdb_sql = sp.Popen(['mdb-export', filename, table], bufsize=-1,
+                           stdin=None, stdout=sp.PIPE)
+        mdb_csv = csv.reader(mdb_sql.stdout)
+        mdb_headers = mdb_csv.next()
+        quoted_headers = ['"%s"' % h for h in mdb_headers]
+        joined_headers = ', '.join(quoted_headers)
+        joined_placemarks = ', '.join(['?' for h in mdb_headers])
+        insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(table,
+                                        joined_headers, joined_placemarks)
+        s3db.executemany(insert_stmt, mdb_csv)
+        s3db.commit()
+    finally:
+        mdb_sql.terminate()
+
+
+def mdb_get_data(filename, table):
+    if table in mdb_tables_text:
+        mdb_get_data_text(filename, table)
+    elif table in mdb_tables_numeric:
+        mdb_get_data_numeric(filename, table)
+    else:
+        raise ValueError("'%s' is in neither mdb_tables_text nor mdb_tables_numeric" % table)
+
+for table in reversed(mdb_tables + mdb_5_23_tables):
+    s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
+
+for table in mdb_tables:
+    s3db.executescript(mdb_create_scripts[table])
+    mdb_get_data(input_filename, table)
+    if table in mdb_create_indices:
+        print "Creating indices for %s..." % table
+        s3db.executescript(mdb_create_indices[table])
+
+if (s3db.execute("SELECT Version_Schema_Field FROM Version_Table;").fetchone()[0] == "Results File 5.23"):
+    for table in mdb_5_23_tables:
+        s3db.executescript(mdb_create_scripts[table])
+        mdb_get_data(input_filename, table)
+        if table in mdb_create_indices:
+            s3db.executescript(mdb_create_indices[table])
+
+print "Creating helper table for capacity and energy totals..."
+s3db.executescript(helper_table_script)
+
+print "Vacuuming database..."
+s3db.executescript("VACUUM; ANALYZE;")
