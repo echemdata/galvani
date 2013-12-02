@@ -2,17 +2,9 @@
 
 import subprocess as sp
 import sqlite3
-import sys
 import re
 import csv
-
-input_filename = sys.argv[1]
-if len(sys.argv) > 2:
-    output_filename = sys.argv[2]
-else:
-    output_filename = input_filename.replace('.res', '.res3')
-
-s3db = sqlite3.connect(output_filename)
+import argparse
 
 
 ## The following scripts are adapted from the result of running
@@ -22,13 +14,14 @@ mdb_tables = ["Version_Table", "Global_Table", "Resume_Table",
               "Channel_Normal_Table", "Channel_Statistic_Table",
               "Auxiliary_Table", "Event_Table",
               "Smart_Battery_Info_Table", "Smart_Battery_Data_Table"]
-           
-mdb_tables_text = ["Version_Table", "Global_Table", "Event_Table", 
+
+mdb_tables_text = ["Version_Table", "Global_Table", "Event_Table",
                    "Smart_Battery_Info_Table"]
 mdb_tables_numeric = ["Resume_Table", "Channel_Normal_Table",
-                "Channel_Statistic_Table", "Auxiliary_Table",
-                "Smart_Battery_Data_Table", 'MCell_Aci_Data_Table',
-                'Aux_Global_Data_Table', 'Smart_Battery_Clock_Stretch_Table']
+                      "Channel_Statistic_Table", "Auxiliary_Table",
+                      "Smart_Battery_Data_Table", 'MCell_Aci_Data_Table',
+                      'Aux_Global_Data_Table',
+                      'Smart_Battery_Clock_Stretch_Table']
 
 mdb_5_23_tables = ['MCell_Aci_Data_Table', 'Aux_Global_Data_Table',
                    'Smart_Battery_Clock_Stretch_Table']
@@ -343,7 +336,7 @@ INSERT INTO Capacity_Sum_Table
         FROM capacity_helper AS a LEFT JOIN capacity_helper AS b 
             ON (a.Test_ID = b.Test_ID AND a.Cycle_Index > b.Cycle_Index)
         GROUP BY a.Test_ID, a.Cycle_Index;
-        
+
 DROP TABLE capacity_helper;
 
 CREATE VIEW IF NOT EXISTS Capacity_View
@@ -356,37 +349,38 @@ CREATE VIEW IF NOT EXISTS Capacity_View
         FROM Channel_Normal_Table NATURAL JOIN Capacity_Sum_Table;
 """
 
-insert_re = re.compile(r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n', re.I)
-
 
 def mdb_get_data_text(filename, table):
-    print "Reading %s..." % table
+    print("Reading %s..." % table)
     try:
         mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
-                           bufsize=-1, stdin=None, stdout=sp.PIPE)
+                           bufsize=-1, stdin=None, stdout=sp.PIPE,
+                           universal_newlines=True)
         mdb_output = mdb_sql.stdout.read()
         while len(mdb_output) > 0:
-            insert_match = insert_re.match(mdb_output)
+            insert_match = re.match(r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n',
+                                    mdb_output, re.IGNORECASE)
             s3db.execute(insert_match.group())
             mdb_output = mdb_output[insert_match.end():]
         s3db.commit()
     except:
-        print "Error while importing %s" % table
-        print "Remaining mdb-export output: " + mdb_output
+        print("Error while importing %s" % table)
+        print("Remaining mdb-export output:", mdb_output)
         if insert_match:
-            print "insert_re match: " + insert_match
+            print("insert_re match:", insert_match)
         raise
     finally:
         mdb_sql.terminate()
 
 
 def mdb_get_data_numeric(filename, table):
-    print "Reading %s..." % table
+    print("Reading %s..." % table)
     try:
-        mdb_sql = sp.Popen(['mdb-export', filename, table], bufsize=-1,
-                           stdin=None, stdout=sp.PIPE)
+        mdb_sql = sp.Popen(['mdb-export', filename, table],
+                           bufsize=-1, stdin=None, stdout=sp.PIPE,
+                           universal_newlines=True)
         mdb_csv = csv.reader(mdb_sql.stdout)
-        mdb_headers = mdb_csv.next()
+        mdb_headers = next(mdb_csv)
         quoted_headers = ['"%s"' % h for h in mdb_headers]
         joined_headers = ', '.join(quoted_headers)
         joined_placemarks = ', '.join(['?' for h in mdb_headers])
@@ -406,25 +400,37 @@ def mdb_get_data(filename, table):
     else:
         raise ValueError("'%s' is in neither mdb_tables_text nor mdb_tables_numeric" % table)
 
+
+## Main part of the script
+
+parser = argparse.ArgumentParser(description="Convert Arbin .res files to sqlite3 databases using mdb-export")
+parser.add_argument('input_file', type=str)  # need file name to pass to sp.Popen
+parser.add_argument('output_file', type=str)  # need file name to pass to sqlite3.connect
+
+args = parser.parse_args()
+
+s3db = sqlite3.connect(args.output_file)
+
+
 for table in reversed(mdb_tables + mdb_5_23_tables):
     s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
 
 for table in mdb_tables:
     s3db.executescript(mdb_create_scripts[table])
-    mdb_get_data(input_filename, table)
+    mdb_get_data(args.input_file, table)
     if table in mdb_create_indices:
-        print "Creating indices for %s..." % table
+        print("Creating indices for %s..." % table)
         s3db.executescript(mdb_create_indices[table])
 
 if (s3db.execute("SELECT Version_Schema_Field FROM Version_Table;").fetchone()[0] == "Results File 5.23"):
     for table in mdb_5_23_tables:
         s3db.executescript(mdb_create_scripts[table])
-        mdb_get_data(input_filename, table)
+        mdb_get_data(args.input_file, table)
         if table in mdb_create_indices:
             s3db.executescript(mdb_create_indices[table])
 
-print "Creating helper table for capacity and energy totals..."
+print("Creating helper table for capacity and energy totals...")
 s3db.executescript(helper_table_script)
 
-print "Vacuuming database..."
+print("Vacuuming database...")
 s3db.executescript("VACUUM; ANALYZE;")
