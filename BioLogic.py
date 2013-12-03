@@ -174,6 +174,13 @@ class MPRfile:
 
     The file format is not specified anywhere and has therefore been reverse
     engineered. Not all the fields are known.
+
+    Attributes
+    ==========
+    modules - A list of dicts containing basic information about the 'modules'
+              of which the file is composed.
+    data - numpy record array of type VMPdata_dtype containing the main data
+           array of the file.
     """
 
     def __init__(self, file_or_path):
