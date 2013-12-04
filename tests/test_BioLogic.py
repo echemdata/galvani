@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
+from datetime import date
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -40,8 +41,10 @@ def test_open_MPT_csv_fails_for_bad_file():
     mpt1 = MPTfileCSV(os.path.join(testdata_dir, 'bio-logic1.mpr'))
 
 
-def test_open_MPR():
+def test_MPR_read_dates():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
+    eq_(mpr1.startdate, date(2011, 10, 29))
+    eq_(mpr1.enddate, date(2011, 10, 31))
 
 
 @raises(ValueError)

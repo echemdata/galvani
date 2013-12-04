@@ -6,6 +6,8 @@ __all__ = ['MPTfileCSV', 'MPTfile']
 import re
 import csv
 from os import SEEK_SET, SEEK_CUR
+import time
+from datetime import date
 
 import numpy as np
 
@@ -181,6 +183,8 @@ class MPRfile:
               of which the file is composed.
     data - numpy record array of type VMPdata_dtype containing the main data
            array of the file.
+    startdate - The date when the experiment started
+    enddate - The date when the experiment finished
     """
 
     def __init__(self, file_or_path):
@@ -196,8 +200,16 @@ class MPRfile:
 
         modules = list(read_VMP_modules(mpr_file))
         self.modules = modules
+        settings_mod, = (m for m in modules if m['shortname'] == b'VMP Set   ')
         data_module, = (m for m in modules if m['shortname'] == b'VMP data  ')
+        log_module, = (m for m in modules if m['shortname'] == b'VMP LOG   ')
 
         ## There is 100 bytes of data before the main array starts
         self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
                                   offset=100)
+        tm = time.strptime(str(settings_mod['date'],  encoding='ascii'),
+                           '%m/%d/%y')
+        self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+        tm = time.strptime(str(log_module['date'],  encoding='ascii'),
+                           '%m/%d/%y')
+        self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
