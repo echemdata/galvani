@@ -41,10 +41,16 @@ def test_open_MPT_csv_fails_for_bad_file():
     mpt1 = MPTfileCSV(os.path.join(testdata_dir, 'bio-logic1.mpr'))
 
 
-def test_MPR_read_dates():
+def test_MPR1_read_dates():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
     eq_(mpr1.startdate, date(2011, 10, 29))
     eq_(mpr1.enddate, date(2011, 10, 31))
+
+
+def test_MPR2_read_dates():
+    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
+    eq_(mpr2.startdate, date(2012, 9, 27))
+    eq_(mpr2.enddate, date(2012, 9, 27))
 
 
 @raises(ValueError)
@@ -52,39 +58,50 @@ def test_open_MPR_fails_for_bad_file():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
 
 
-def test_MPR_matches_MPT():
-    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
-    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic1.mpt'))
+def assert_MPR_matches_MPT(mpr, mpt):
 
-    assert_array_equal(mpr1.data["flags"] & 0x03, mpt1["mode"])
-    assert_array_equal(np.array(mpr1.data["flags"] & 0x04, dtype=np.bool_),
-                       mpt1["ox/red"])
-    assert_array_equal(np.array(mpr1.data["flags"] & 0x08, dtype=np.bool_),
-                       mpt1["error"])
-    assert_array_equal(np.array(mpr1.data["flags"] & 0x10, dtype=np.bool_),
-                       mpt1["control changes"])
-    assert_array_equal(np.array(mpr1.data["flags"] & 0x20, dtype=np.bool_),
-                       mpt1["Ns changes"])
+    assert_array_equal(mpr.data["flags"] & 0x03, mpt["mode"])
+    assert_array_equal(np.array(mpr.data["flags"] & 0x04, dtype=np.bool_),
+                       mpt["ox/red"])
+    assert_array_equal(np.array(mpr.data["flags"] & 0x08, dtype=np.bool_),
+                       mpt["error"])
+    assert_array_equal(np.array(mpr.data["flags"] & 0x10, dtype=np.bool_),
+                       mpt["control changes"])
+    assert_array_equal(np.array(mpr.data["flags"] & 0x20, dtype=np.bool_),
+                       mpt["Ns changes"])
     ## Nothing uses the 0x40 bit of the flags
-    assert_array_equal(np.array(mpr1.data["flags"] & 0x80, dtype=np.bool_),
-                       mpt1["counter inc."])
+    assert_array_equal(np.array(mpr.data["flags"] & 0x80, dtype=np.bool_),
+                       mpt["counter inc."])
 
-    assert_array_almost_equal(mpr1.data["time/s"],
-                              mpt1["time/s"],
+    assert_array_almost_equal(mpr.data["time/s"],
+                              mpt["time/s"],
                               decimal=5)  # 5 digits in CSV
 
-    assert_array_almost_equal(mpr1.data["control/V/mA"],
-                              mpt1["control/V/mA"],
+    assert_array_almost_equal(mpr.data["control/V/mA"],
+                              mpt["control/V/mA"],
                               decimal=6)  # 32 bit float precision
 
-    assert_array_almost_equal(mpr1.data["Ewe/V"],
-                              mpt1["Ewe/V"],
+    assert_array_almost_equal(mpr.data["Ewe/V"],
+                              mpt["Ewe/V"],
                               decimal=6)  # 32 bit float precision
 
-    assert_array_almost_equal(mpr1.data["dQ/mA.h"],
-                              mpt1["dQ/mA.h"],
+    assert_array_almost_equal(mpr.data["dQ/mA.h"],
+                              mpt["dQ/mA.h"],
                               decimal=17)  # 64 bit float precision
 
-    assert_array_almost_equal(mpr1.data["P/W"],
-                              mpt1["P/W"],
+    assert_array_almost_equal(mpr.data["P/W"],
+                              mpt["P/W"],
                               decimal=10)  # 32 bit float precision for 1.xxE-5
+
+
+def test_MPR1_matches_MPT1():
+    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
+    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic1.mpt'))
+    assert_MPR_matches_MPT(mpr1, mpt1)
+    
+
+def test_MPR2_matches_MPT2():
+    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
+    mpt2, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic2.mpt'))
+    assert_MPR_matches_MPT(mpr2, mpt2)
+    
