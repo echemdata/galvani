@@ -225,6 +225,9 @@ class MPRfile:
                    VMPdata_dtype.itemsize * n_data_points)
             self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
                                       offset=405)
+        else:
+            raise ValueError("Unrecognised version for data module: %d" % 
+                             data_module['version'])
         ## No idea what these 'column types' mean or even if they are actually
         ## column types at all
         np.testing.assert_array_equal(column_types,
