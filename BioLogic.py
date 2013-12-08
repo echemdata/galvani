@@ -205,9 +205,31 @@ class MPRfile:
         data_module, = (m for m in modules if m['shortname'] == b'VMP data  ')
         log_module, = (m for m in modules if m['shortname'] == b'VMP LOG   ')
 
-        ## There is 100 bytes of data before the main array starts
-        self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
-                                  offset=100)
+        n_data_points = np.fromstring(data_module['data'][:4], dtype='<u4')
+        ## not actually sure if this is the number of columns or if it means
+        ## something else:
+        n_columns = int(data_module['data'][4])
+        if data_module['version'] == 0:
+            ## There is 100 bytes of data before the main array starts
+            column_types = np.fromstring(data_module['data'][5:], dtype='u1',
+                                         count=n_columns)              
+            assert(data_module['length'] - 100 ==
+                   VMPdata_dtype.itemsize * n_data_points)
+            self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
+                                      offset=100)
+        elif data_module['version'] == 2:
+            ## There is 405 bytes of data before the main array starts
+            column_types = np.fromstring(data_module['data'][5:], dtype='<u2',
+                                         count=n_columns)
+            assert(data_module['length'] - 405 ==
+                   VMPdata_dtype.itemsize * n_data_points)
+            self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
+                                      offset=405)
+        ## No idea what these 'column types' mean or even if they are actually
+        ## column types at all
+        np.testing.assert_array_equal(column_types,
+                                      [1, 2, 3, 21, 31, 65, 4, 5, 6, 7, 70])
+
         tm = time.strptime(str(settings_mod['date'],  encoding='ascii'),
                            '%m/%d/%y')
         self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
