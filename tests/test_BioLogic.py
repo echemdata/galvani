@@ -41,16 +41,25 @@ def test_open_MPT_csv_fails_for_bad_file():
     mpt1 = MPTfileCSV(os.path.join(testdata_dir, 'bio-logic1.mpr'))
 
 
-def test_MPR1_read_dates():
+def test_open_MPR1():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
+    ## Check the dates as a basic test that it has been read properly
     eq_(mpr1.startdate, date(2011, 10, 29))
     eq_(mpr1.enddate, date(2011, 10, 31))
 
 
-def test_MPR2_read_dates():
+def test_open_MPR2():
     mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
+    ## Check the dates as a basic test that it has been read properly
     eq_(mpr2.startdate, date(2012, 9, 27))
     eq_(mpr2.enddate, date(2012, 9, 27))
+
+
+def test_open_MPR3():
+    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic3.mpr'))
+    ## Check the dates as a basic test that it has been read properly
+    eq_(mpr2.startdate, date(2013, 3, 27))
+    eq_(mpr2.enddate, date(2013, 3, 27))
 
 
 @raises(ValueError)

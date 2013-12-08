@@ -135,6 +135,13 @@ VMPdata_dtype = np.dtype([('flags', 'u1'),
                           ("Ewe/V", '<f4'),
                           ("dQ/mA.h", '<f8'),
                           ("P/W", '<f4')])
+VMPdata_dtype_extra = np.dtype([('flags', '<u2'),
+                                ('blank', 'a1'),
+                                ("time/s", '<f8'),
+                                ("control/V/mA", '<f4'),
+                                ("Ewe/V", '<f4'),
+                                ("dQ/mA.h", '<f8'),
+                                ("P/W", '<f4')])
 
 
 def read_VMP_modules(fileobj, read_module_data=True):
@@ -211,27 +218,47 @@ class MPRfile:
         n_columns = int(data_module['data'][4])
         if data_module['version'] == 0:
             ## There is 100 bytes of data before the main array starts
+            assert(n_columns == 11)
             column_types = np.fromstring(data_module['data'][5:], dtype='u1',
-                                         count=n_columns)              
+                                         count=n_columns)
+            np.testing.assert_array_equal(column_types,
+                                          [1, 2, 3, 21, 31, 65,
+                                           4, 5, 6, 7, 70])
             assert(data_module['length'] - 100 ==
                    VMPdata_dtype.itemsize * n_data_points)
-            self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
+            self.data = np.frombuffer(data_module['data'],
+                                      dtype=VMPdata_dtype,
                                       offset=100)
         elif data_module['version'] == 2:
             ## There is 405 bytes of data before the main array starts
             column_types = np.fromstring(data_module['data'][5:], dtype='<u2',
                                          count=n_columns)
-            assert(data_module['length'] - 405 ==
-                   VMPdata_dtype.itemsize * n_data_points)
-            self.data = np.frombuffer(data_module['data'], dtype=VMPdata_dtype,
-                                      offset=405)
+            if n_columns == 11:
+                np.testing.assert_array_equal(column_types,
+                                              [1, 2, 3, 21, 31, 65,
+                                               4, 5, 6, 7, 70])
+                assert(data_module['length'] - 405 ==
+                       VMPdata_dtype.itemsize * n_data_points)
+                self.data = np.frombuffer(data_module['data'],
+                                          dtype=VMPdata_dtype,
+                                          offset=405)
+            elif n_columns == 12:
+                np.testing.assert_array_equal(column_types,
+                                              [1, 2, 3, 21, 31, 65,
+                                               131, 4, 5, 6, 7, 70])
+                assert(data_module['length'] - 405 ==
+                       VMPdata_dtype_extra.itemsize * n_data_points)
+                self.data = np.frombuffer(data_module['data'],
+                                          dtype=VMPdata_dtype_extra,
+                                          offset=405)
+                assert(np.all(self.data['blank'] == b'\x00'))
+            else:
+                raise ValueError("Cannot deal with n_columns = %d" % n_columns)
         else:
-            raise ValueError("Unrecognised version for data module: %d" % 
+            raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
         ## No idea what these 'column types' mean or even if they are actually
         ## column types at all
-        np.testing.assert_array_equal(column_types,
-                                      [1, 2, 3, 21, 31, 65, 4, 5, 6, 7, 70])
 
         tm = time.strptime(str(settings_mod['date'],  encoding='ascii'),
                            '%m/%d/%y')
