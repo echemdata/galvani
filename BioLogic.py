@@ -126,7 +126,8 @@ def MPTfileCSV(file_or_path):
 
 VMPmodule_hdr = np.dtype([('shortname', 'S10'),
                           ('longname', 'S25'),
-                          ('length', '<u8'),
+                          ('length', '<u4'),
+                          ('version', '<u4'),
                           ('date', 'S8')])
 VMPdata_dtype = np.dtype([('flags', 'u1'),
                           ("time/s", '<f8'),
