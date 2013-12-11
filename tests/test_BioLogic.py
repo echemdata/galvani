@@ -77,18 +77,29 @@ def test_open_MPR5():
     eq_(mpr.enddate, date(2013, 1, 28))
 
 
+def test_open_MPR6():
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic6.mpr'))
+    ## Check the dates as a basic test that it has been read properly
+    eq_(mpr.startdate, date(2012, 9, 11))
+    ## no end date because no VMP LOG module
+
+
 @raises(ValueError)
 def test_open_MPR_fails_for_bad_file():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
 
 
 def assert_MPR_matches_MPT(mpr, mpt):
-    
+
     def assert_field_matches(fieldname, decimal):
         if fieldname in mpr.dtype.fields:
             assert_array_almost_equal(mpr.data[fieldname],
                                       mpt[fieldname],
                                       decimal=decimal)
+
+    def assert_field_exact(fieldname):
+        if fieldname in mpr.dtype.fields:
+            assert_array_equal(mpr.data[fieldname], mpt[fieldname])
 
     assert_array_equal(mpr.data["flags"] & 0x03, mpt["mode"])
     assert_array_equal(np.array(mpr.data["flags"] & 0x04, dtype=np.bool_),
@@ -97,8 +108,9 @@ def assert_MPR_matches_MPT(mpr, mpt):
                        mpt["error"])
     assert_array_equal(np.array(mpr.data["flags"] & 0x10, dtype=np.bool_),
                        mpt["control changes"])
-    assert_array_equal(np.array(mpr.data["flags"] & 0x20, dtype=np.bool_),
-                       mpt["Ns changes"])
+    if "Ns changes" in mpt.dtype.fields:                    
+        assert_array_equal(np.array(mpr.data["flags"] & 0x20, dtype=np.bool_),
+                           mpt["Ns changes"])
     ## Nothing uses the 0x40 bit of the flags
     assert_array_equal(np.array(mpr.data["flags"] & 0x80, dtype=np.bool_),
                        mpt["counter inc."])
@@ -114,12 +126,12 @@ def assert_MPR_matches_MPT(mpr, mpt):
                               mpt["Ewe/V"],
                               decimal=6)  # 32 bit float precision
 
-    assert_array_almost_equal(mpr.data["dQ/mA.h"],
-                              mpt["dQ/mA.h"],
-                              decimal=17)  # 64 bit float precision
-
+    assert_field_matches("dQ/mA.h", decimal=17)  # 64 bit float precision
     assert_field_matches("P/W", decimal=10)  # 32 bit float precision for 1.xxE-5
     assert_field_matches("I/mA", decimal=6)  # 32 bit float precision
+    
+    assert_field_exact("cycle number")
+    assert_field_matches("(Q-Qo)/C", decimal=6)  # 32 bit float precision
 
 
 def test_MPR1_matches_MPT1():
@@ -148,4 +160,11 @@ def test_MPR5_matches_MPT5():
     mpt, comments = MPTfile((re.sub(b'\tXXX\t', b'\t0\t', line) for line in
                              open(os.path.join(testdata_dir, 'bio-logic5.mpt'),
                                   mode='rb')))
+    assert_MPR_matches_MPT(mpr, mpt)
+
+
+def test_MPR6_matches_MPT6():
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic6.mpr'))
+    mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic6.mpt'))
+    mpr.data = mpr.data[:958]  # .mpt file is incomplete
     assert_MPR_matches_MPT(mpr, mpt)

@@ -24,8 +24,10 @@ def fieldname_to_dtype(fieldname):
                        "counter inc."):
         return (fieldname, np.bool_)
     elif fieldname in ("time/s", "Ewe/V", "P/W", "(Q-Qo)/mA.h", "x",
-                       "control/V", "control/V/mA"):
+                       "control/V", "control/V/mA", "(Q-Qo)/C"):
         return (fieldname, np.float_)
+    elif fieldname in ("cycle number",):
+        return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
@@ -60,23 +62,6 @@ def MPTfile(file_or_path):
     comments = [next(mpt_file) for i in range(nb_headers - 3)]
 
     fieldnames = next(mpt_file).decode('ascii').strip().split('\t')
-
-    expected_fieldnames = (
-        ["mode", "ox/red", "error", "control changes", "Ns changes",
-         "counter inc.", "time/s", "control/V/mA", "Ewe/V", "dq/mA.h",
-         "P/W", "<I>/mA", "(Q-Qo)/mA.h", "x"],
-        ['mode', 'ox/red', 'error', 'control changes', 'Ns changes',
-         'counter inc.', 'time/s', 'control/V', 'Ewe/V', 'dq/mA.h',
-         '<I>/mA', '(Q-Qo)/mA.h', 'x'],
-        ["mode", "ox/red", "error", "control changes", "Ns changes",
-         "counter inc.", "time/s", "control/V", "Ewe/V", "I/mA",
-         "dQ/mA.h", "P/W"],
-        ["mode", "ox/red", "error", "control changes", "Ns changes",
-         "counter inc.", "time/s", "control/V", "Ewe/V", "<I>/mA",
-         "dQ/mA.h", "P/W"])
-    if fieldnames not in expected_fieldnames:
-        warn("Unrecognised headers for MPT file format %s" % fieldnames)
-
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
     mpt_array = np.loadtxt(mpt_file, dtype=record_type)
@@ -155,10 +140,16 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['dQ/mA.h'] = '<f8'
         elif colID == 8:
             dtype_dict['I/mA'] = '<f4'
+        elif colID == 11:
+            dtype_dict['I/mA'] = '<f8'
         elif colID == 19:
             dtype_dict['control/V'] = '<f4'
+        elif colID == 24:
+            dtype_dict['cycle number'] = '<f8'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
+        elif colID == 434:
+            dtype_dict['(Q-Qo)/C'] = '<f4'
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items()))    
