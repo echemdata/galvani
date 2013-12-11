@@ -9,6 +9,7 @@ from os import SEEK_SET, SEEK_CUR
 import time
 from datetime import date
 from collections import OrderedDict
+from warnings import warn
 
 import numpy as np
 
@@ -74,8 +75,7 @@ def MPTfile(file_or_path):
          "counter inc.", "time/s", "control/V", "Ewe/V", "<I>/mA",
          "dQ/mA.h", "P/W"])
     if fieldnames not in expected_fieldnames:
-        raise ValueError("Unrecognised headers for MPT file format %s" %
-                         fieldnames)
+        warn("Unrecognised headers for MPT file format %s" % fieldnames)
 
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
@@ -150,8 +150,11 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['control/V/mA'] = '<f4'
         elif colID == 6:
             dtype_dict['Ewe/V'] = '<f4'
-        elif colID == 7:
+        ## Not sure of the difference between 7 and 23 - they seem to be the same
+        elif colID == 7 or colID == 23:
             dtype_dict['dQ/mA.h'] = '<f8'
+        elif colID == 8:
+            dtype_dict['I/mA'] = '<f4'
         elif colID == 19:
             dtype_dict['control/V'] = '<f4'
         elif colID == 70:

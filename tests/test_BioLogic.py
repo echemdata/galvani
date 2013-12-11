@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
+import re
 from datetime import date
 
 import numpy as np
@@ -69,6 +70,13 @@ def test_open_MPR4():
     eq_(mpr.enddate, date(2011, 11, 2))
 
 
+def test_open_MPR5():
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic5.mpr'))
+    ## Check the dates as a basic test that it has been read properly
+    eq_(mpr.startdate, date(2013, 1, 28))
+    eq_(mpr.enddate, date(2013, 1, 28))
+
+
 @raises(ValueError)
 def test_open_MPR_fails_for_bad_file():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
@@ -77,7 +85,7 @@ def test_open_MPR_fails_for_bad_file():
 def assert_MPR_matches_MPT(mpr, mpt):
     
     def assert_field_matches(fieldname, decimal):
-        if fieldname in mpt.dtype.fields:
+        if fieldname in mpr.dtype.fields:
             assert_array_almost_equal(mpr.data[fieldname],
                                       mpt[fieldname],
                                       decimal=decimal)
@@ -97,7 +105,7 @@ def assert_MPR_matches_MPT(mpr, mpt):
 
     assert_array_almost_equal(mpr.data["time/s"],
                               mpt["time/s"],
-                              decimal=5)  # 5 digits in CSV
+                              decimal=4)  # 5 digits in CSV
 
     assert_field_matches("control/V/mA", decimal=6)
     assert_field_matches("control/V", decimal=6)
@@ -111,6 +119,7 @@ def assert_MPR_matches_MPT(mpr, mpt):
                               decimal=17)  # 64 bit float precision
 
     assert_field_matches("P/W", decimal=10)  # 32 bit float precision for 1.xxE-5
+    assert_field_matches("I/mA", decimal=6)  # 32 bit float precision
 
 
 def test_MPR1_matches_MPT1():
@@ -132,4 +141,11 @@ def test_MPR4_matches_MPT4():
     mpr4 = MPRfile(os.path.join(testdata_dir, 'bio-logic4.mpr'))
     mpt4, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic4.mpt'))
     assert_MPR_matches_MPT(mpr4, mpt4)
-    
+
+
+def test_MPR5_matches_MPT5():
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic5.mpr'))
+    mpt, comments = MPTfile((re.sub(b'\tXXX\t', b'\t0\t', line) for line in
+                             open(os.path.join(testdata_dir, 'bio-logic5.mpt'),
+                                  mode='rb')))
+    assert_MPR_matches_MPT(mpr, mpt)
