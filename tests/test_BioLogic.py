@@ -62,12 +62,25 @@ def test_open_MPR3():
     eq_(mpr.enddate, date(2013, 3, 27))
 
 
+def test_open_MPR4():
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic4.mpr'))
+    ## Check the dates as a basic test that it has been read properly
+    eq_(mpr.startdate, date(2011, 11, 1))
+    eq_(mpr.enddate, date(2011, 11, 2))
+
+
 @raises(ValueError)
 def test_open_MPR_fails_for_bad_file():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
 
 
 def assert_MPR_matches_MPT(mpr, mpt):
+    
+    def assert_field_matches(fieldname, decimal):
+        if fieldname in mpt.dtype.fields:
+            assert_array_almost_equal(mpr.data[fieldname],
+                                      mpt[fieldname],
+                                      decimal=decimal)
 
     assert_array_equal(mpr.data["flags"] & 0x03, mpt["mode"])
     assert_array_equal(np.array(mpr.data["flags"] & 0x04, dtype=np.bool_),
@@ -86,14 +99,8 @@ def assert_MPR_matches_MPT(mpr, mpt):
                               mpt["time/s"],
                               decimal=5)  # 5 digits in CSV
 
-    if "control/V/mA" in mpt.dtype.fields:
-        assert_array_almost_equal(mpr.data["control/V/mA"],
-                                  mpt["control/V/mA"],
-                                  decimal=6)  # 32 bit float precision
-    if "control/V" in mpt.dtype.fields:
-        assert_array_almost_equal(mpr.data["control/V"],
-                                  mpt["control/V"],
-                                  decimal=6)  # 32 bit float precision
+    assert_field_matches("control/V/mA", decimal=6)
+    assert_field_matches("control/V", decimal=6)
 
     assert_array_almost_equal(mpr.data["Ewe/V"],
                               mpt["Ewe/V"],
@@ -103,9 +110,7 @@ def assert_MPR_matches_MPT(mpr, mpt):
                               mpt["dQ/mA.h"],
                               decimal=17)  # 64 bit float precision
 
-    assert_array_almost_equal(mpr.data["P/W"],
-                              mpt["P/W"],
-                              decimal=10)  # 32 bit float precision for 1.xxE-5
+    assert_field_matches("P/W", decimal=10)  # 32 bit float precision for 1.xxE-5
 
 
 def test_MPR1_matches_MPT1():
@@ -118,4 +123,13 @@ def test_MPR2_matches_MPT2():
     mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
     mpt2, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic2.mpt'))
     assert_MPR_matches_MPT(mpr2, mpt2)
+
+
+## No bio-logic3.mpt file
+
+
+def test_MPR4_matches_MPT4():
+    mpr4 = MPRfile(os.path.join(testdata_dir, 'bio-logic4.mpr'))
+    mpt4, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic4.mpt'))
+    assert_MPR_matches_MPT(mpr4, mpt4)
     

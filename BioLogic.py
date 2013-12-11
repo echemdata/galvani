@@ -152,6 +152,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Ewe/V'] = '<f4'
         elif colID == 7:
             dtype_dict['dQ/mA.h'] = '<f8'
+        elif colID == 19:
+            dtype_dict['control/V'] = '<f4'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
         else:
