@@ -7,7 +7,7 @@ import re
 import csv
 from os import SEEK_SET, SEEK_CUR
 import time
-from datetime import date
+from datetime import date, datetime, timedelta
 from collections import OrderedDict
 from warnings import warn
 
@@ -261,3 +261,24 @@ class MPRfile:
             tm = time.strptime(str(log_module['date'],  encoding='ascii'),
                                '%m/%d/%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+
+            ## There is a timestamp at either 465 or 469 bytes
+            ## I can't find any reason why it is one or the other in any
+            ## given file
+            ole_timestamp1 = np.fromstring(log_module['data'][465:],
+                                           dtype='<f8', count=1)
+            ole_timestamp2 = np.fromstring(log_module['data'][469:],
+                                           dtype='<f8', count=1)
+            if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
+                ole_timestamp = ole_timestamp1
+            elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
+                ole_timestamp = ole_timestamp2
+
+            ole_base = datetime(1899, 12, 30, tzinfo=None)
+            ole_timedelta = timedelta(days=ole_timestamp[0])
+            self.timestamp = ole_base + ole_timedelta
+            if self.startdate != self.timestamp.date():
+                raise ValueError("""Date mismatch:
+                Start date: %s
+                End date: %s
+                Timestamp: %s""" % (self.startdate, self.enddate, self.timestamp))

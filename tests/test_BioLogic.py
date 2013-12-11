@@ -2,7 +2,7 @@
 
 import os.path
 import re
-from datetime import date
+from datetime import date, datetime
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -89,7 +89,17 @@ def test_open_MPR_fails_for_bad_file():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
 
 
-def assert_MPR_matches_MPT(mpr, mpt):
+def timestamp_from_comments(comments):
+    for line in comments:
+        time_match = re.match(b'Acquisition started on : ([0-9/]+ [0-9:]+)', line)
+        if time_match:
+            timestamp = datetime.strptime(str(time_match.group(1), encoding='ascii'),
+                                          '%m/%d/%Y %H:%M:%S')
+            return timestamp
+    raise AttributeError("No timestamp in comments")
+
+
+def assert_MPR_matches_MPT(mpr, mpt, comments):
 
     def assert_field_matches(fieldname, decimal):
         if fieldname in mpr.dtype.fields:
@@ -132,18 +142,24 @@ def assert_MPR_matches_MPT(mpr, mpt):
     
     assert_field_exact("cycle number")
     assert_field_matches("(Q-Qo)/C", decimal=6)  # 32 bit float precision
+    
+    try:
+        eq_(timestamp_from_comments(comments), mpr.timestamp)
+    except AttributeError:
+        pass
+    
 
 
 def test_MPR1_matches_MPT1():
     mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
     mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic1.mpt'))
-    assert_MPR_matches_MPT(mpr1, mpt1)
-    
+    assert_MPR_matches_MPT(mpr1, mpt1, comments)
+
 
 def test_MPR2_matches_MPT2():
     mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
     mpt2, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic2.mpt'))
-    assert_MPR_matches_MPT(mpr2, mpt2)
+    assert_MPR_matches_MPT(mpr2, mpt2, comments)
 
 
 ## No bio-logic3.mpt file
@@ -152,7 +168,7 @@ def test_MPR2_matches_MPT2():
 def test_MPR4_matches_MPT4():
     mpr4 = MPRfile(os.path.join(testdata_dir, 'bio-logic4.mpr'))
     mpt4, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic4.mpt'))
-    assert_MPR_matches_MPT(mpr4, mpt4)
+    assert_MPR_matches_MPT(mpr4, mpt4, comments)
 
 
 def test_MPR5_matches_MPT5():
@@ -160,11 +176,11 @@ def test_MPR5_matches_MPT5():
     mpt, comments = MPTfile((re.sub(b'\tXXX\t', b'\t0\t', line) for line in
                              open(os.path.join(testdata_dir, 'bio-logic5.mpt'),
                                   mode='rb')))
-    assert_MPR_matches_MPT(mpr, mpt)
+    assert_MPR_matches_MPT(mpr, mpt, comments)
 
 
 def test_MPR6_matches_MPT6():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic6.mpr'))
     mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic6.mpt'))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
-    assert_MPR_matches_MPT(mpr, mpt)
+    assert_MPR_matches_MPT(mpr, mpt, comments)
