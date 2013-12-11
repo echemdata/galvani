@@ -56,10 +56,10 @@ def test_open_MPR2():
 
 
 def test_open_MPR3():
-    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic3.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic3.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr2.startdate, date(2013, 3, 27))
-    eq_(mpr2.enddate, date(2013, 3, 27))
+    eq_(mpr.startdate, date(2013, 3, 27))
+    eq_(mpr.enddate, date(2013, 3, 27))
 
 
 @raises(ValueError)
@@ -86,9 +86,14 @@ def assert_MPR_matches_MPT(mpr, mpt):
                               mpt["time/s"],
                               decimal=5)  # 5 digits in CSV
 
-    assert_array_almost_equal(mpr.data["control/V/mA"],
-                              mpt["control/V/mA"],
-                              decimal=6)  # 32 bit float precision
+    if "control/V/mA" in mpt.dtype.fields:
+        assert_array_almost_equal(mpr.data["control/V/mA"],
+                                  mpt["control/V/mA"],
+                                  decimal=6)  # 32 bit float precision
+    if "control/V" in mpt.dtype.fields:
+        assert_array_almost_equal(mpr.data["control/V"],
+                                  mpt["control/V"],
+                                  decimal=6)  # 32 bit float precision
 
     assert_array_almost_equal(mpr.data["Ewe/V"],
                               mpt["Ewe/V"],

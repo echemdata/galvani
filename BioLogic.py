@@ -22,14 +22,13 @@ def fieldname_to_dtype(fieldname):
     elif fieldname in ("ox/red", "error", "control changes", "Ns changes",
                        "counter inc."):
         return (fieldname, np.bool_)
-    elif fieldname in ("time/s", "Ewe/V", "P/W", "(Q-Qo)/mA.h", "x"):
+    elif fieldname in ("time/s", "Ewe/V", "P/W", "(Q-Qo)/mA.h", "x",
+                       "control/V", "control/V/mA"):
         return (fieldname, np.float_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
         return ("I/mA", np.float_)
-    elif fieldname in ("control/V", "control/V/mA"):
-        return ("control/V/mA", np.float_)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
         
@@ -65,6 +64,9 @@ def MPTfile(file_or_path):
         ["mode", "ox/red", "error", "control changes", "Ns changes",
          "counter inc.", "time/s", "control/V/mA", "Ewe/V", "dq/mA.h",
          "P/W", "<I>/mA", "(Q-Qo)/mA.h", "x"],
+        ['mode', 'ox/red', 'error', 'control changes', 'Ns changes',
+         'counter inc.', 'time/s', 'control/V', 'Ewe/V', 'dq/mA.h',
+         '<I>/mA', '(Q-Qo)/mA.h', 'x'],
         ["mode", "ox/red", "error", "control changes", "Ns changes",
          "counter inc.", "time/s", "control/V", "Ewe/V", "I/mA",
          "dQ/mA.h", "P/W"],
@@ -113,6 +115,9 @@ def MPTfileCSV(file_or_path):
         ["mode", "ox/red", "error", "control changes", "Ns changes",
          "counter inc.", "time/s", "control/V/mA", "Ewe/V", "dq/mA.h",
          "P/W", "<I>/mA", "(Q-Qo)/mA.h", "x"],
+        ['mode', 'ox/red', 'error', 'control changes', 'Ns changes',
+         'counter inc.', 'time/s', 'control/V', 'Ewe/V', 'dq/mA.h',
+         '<I>/mA', '(Q-Qo)/mA.h', 'x'],
         ["mode", "ox/red", "error", "control changes", "Ns changes",
          "counter inc.", "time/s", "control/V", "Ewe/V", "I/mA",
          "dQ/mA.h", "P/W"],
