@@ -68,7 +68,7 @@ def MPTfile(file_or_path):
     ## make three lines. Every additional line is a comment line.
     comments = [next(mpt_file) for i in range(nb_headers - 3)]
 
-    fieldnames = next(mpt_file).decode('ascii').strip().split('\t')
+    fieldnames = str3(next(mpt_file)).strip().split('\t')
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
     mpt_array = np.loadtxt(mpt_file, dtype=record_type)
@@ -89,7 +89,7 @@ def MPTfileCSV(file_or_path):
         mpt_file = file_or_path
 
     magic = next(mpt_file)
-    if magic != 'EC-Lab ASCII FILE\n':
+    if magic.rstrip() != 'EC-Lab ASCII FILE':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
     nb_headers_match = re.match('Nb header lines : (\d+)\s*$', next(mpt_file))
@@ -248,8 +248,10 @@ class MPRfile:
             raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
 
-        for empty_byte in remaining_headers:
-            assert(empty_byte == b'\x00')
+        if sys.version_info.major <= 2:
+            assert(all((b == '\x00' for b in remaining_headers)))
+        else:
+            assert(not any(remaining_headers))
 
         self.dtype = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.fromstring(main_data, dtype=self.dtype)

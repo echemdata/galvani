@@ -8,8 +8,8 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.tools import ok_, eq_, raises
 
-from ..import MPTfile, MPRfile
-from ..BioLogic import MPTfileCSV  # not exported
+from .. import MPTfile, MPRfile
+from ..BioLogic import MPTfileCSV, str3  # not exported
 
 testdata_dir = os.path.join(os.path.dirname(__file__), 'testdata')
 
@@ -93,7 +93,7 @@ def timestamp_from_comments(comments):
     for line in comments:
         time_match = re.match(b'Acquisition started on : ([0-9/]+ [0-9:]+)', line)
         if time_match:
-            timestamp = datetime.strptime(str(time_match.group(1), encoding='ascii'),
+            timestamp = datetime.strptime(str3(time_match.group(1)),
                                           '%m/%d/%Y %H:%M:%S')
             return timestamp
     raise AttributeError("No timestamp in comments")
