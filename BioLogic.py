@@ -3,6 +3,7 @@
 
 __all__ = ['MPTfileCSV', 'MPTfile']
 
+import sys
 import re
 import csv
 from os import SEEK_SET, SEEK_CUR
@@ -12,6 +13,12 @@ from collections import OrderedDict
 from warnings import warn
 
 import numpy as np
+
+
+if sys.version_info.major <= 2:
+    str3 = str
+else:
+    str3 = lambda b: str(b, encoding='ascii')
 
 
 def fieldname_to_dtype(fieldname):
@@ -34,7 +41,7 @@ def fieldname_to_dtype(fieldname):
         return ("I/mA", np.float_)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
-        
+
 
 def MPTfile(file_or_path):
     """Opens .mpt files as numpy record arrays
@@ -152,7 +159,7 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['(Q-Qo)/C'] = '<f4'
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
-    return np.dtype(list(dtype_dict.items()))    
+    return np.dtype(list(dtype_dict.items()))
 
 
 def read_VMP_modules(fileobj, read_module_data=True):
@@ -224,7 +231,7 @@ class MPRfile:
         maybe_log_module = [m for m in modules if m['shortname'] == b'VMP LOG   ']
 
         n_data_points = np.fromstring(data_module['data'][:4], dtype='<u4')
-        n_columns = int(data_module['data'][4])
+        n_columns = np.fromstring(data_module['data'][4:5], dtype='u1')
 
         if data_module['version'] == 0:
             column_types = np.fromstring(data_module['data'][5:], dtype='u1',
@@ -241,7 +248,9 @@ class MPRfile:
             raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
 
-        assert(not any(remaining_headers))
+        for empty_byte in remaining_headers:
+            assert(empty_byte == b'\x00')
+
         self.dtype = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.fromstring(main_data, dtype=self.dtype)
         assert(self.data.shape[0] == n_data_points)
@@ -252,14 +261,12 @@ class MPRfile:
         self.cols = column_types
         self.npts = n_data_points
 
-        tm = time.strptime(str(settings_mod['date'],  encoding='ascii'),
-                           '%m/%d/%y')
+        tm = time.strptime(str3(settings_mod['date']), '%m/%d/%y')
         self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
         if maybe_log_module:
             log_module, = maybe_log_module
-            tm = time.strptime(str(log_module['date'],  encoding='ascii'),
-                               '%m/%d/%y')
+            tm = time.strptime(str3(log_module['date']), '%m/%d/%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
             ## There is a timestamp at either 465 or 469 bytes
