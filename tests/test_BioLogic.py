@@ -111,19 +111,14 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
         if fieldname in mpr.dtype.fields:
             assert_array_equal(mpr.data[fieldname], mpt[fieldname])
 
-    assert_array_equal(mpr.data["flags"] & 0x03, mpt["mode"])
-    assert_array_equal(np.array(mpr.data["flags"] & 0x04, dtype=np.bool_),
-                       mpt["ox/red"])
-    assert_array_equal(np.array(mpr.data["flags"] & 0x08, dtype=np.bool_),
-                       mpt["error"])
-    assert_array_equal(np.array(mpr.data["flags"] & 0x10, dtype=np.bool_),
-                       mpt["control changes"])
-    if "Ns changes" in mpt.dtype.fields:                    
-        assert_array_equal(np.array(mpr.data["flags"] & 0x20, dtype=np.bool_),
-                           mpt["Ns changes"])
-    ## Nothing uses the 0x40 bit of the flags
-    assert_array_equal(np.array(mpr.data["flags"] & 0x80, dtype=np.bool_),
-                       mpt["counter inc."])
+    assert_array_equal(mpr.get_flag("mode"), mpt["mode"])
+    assert_array_equal(mpr.get_flag("ox/red"), mpt["ox/red"])
+    assert_array_equal(mpr.get_flag("error"), mpt["error"])
+    assert_array_equal(mpr.get_flag("control changes"), mpt["control changes"])
+    if "Ns changes" in mpt.dtype.fields:
+        assert_array_equal(mpr.get_flag("Ns changes"), mpt["Ns changes"])
+    ## Nothing uses the 0x40 bit of the flags    
+    assert_array_equal(mpr.get_flag("counter inc."), mpt["counter inc."])
 
     assert_array_almost_equal(mpr.data["time/s"],
                               mpt["time/s"],
@@ -147,7 +142,6 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
         eq_(timestamp_from_comments(comments), mpr.timestamp)
     except AttributeError:
         pass
-    
 
 
 def test_MPR1_matches_MPT1():
