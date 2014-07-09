@@ -30,15 +30,19 @@ def fieldname_to_dtype(fieldname):
     elif fieldname in ("ox/red", "error", "control changes", "Ns changes",
                        "counter inc."):
         return (fieldname, np.bool_)
-    elif fieldname in ("time/s", "Ewe/V", "P/W", "(Q-Qo)/mA.h", "x",
-                       "control/V", "control/V/mA", "(Q-Qo)/C"):
+    elif fieldname in ("time/s", "P/W", "(Q-Qo)/mA.h", "x", "control/V",
+                       "control/V/mA", "(Q-Qo)/C", "dQ/C", "freq/Hz",
+                       "|Ewe|/V", "|I|/A", "Phase(Z)/deg", "|Z|/Ohm",
+                       "Re(Z)/Ohm", "-Im(Z)/Ohm"):
         return (fieldname, np.float_)
-    elif fieldname in ("cycle number",):
+    elif fieldname in ("cycle number", "I Range"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
         return ("I/mA", np.float_)
+    elif fieldname in ("Ewe/V", "<Ewe>/V"):
+        return ("Ewe/V", np.float_)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
 
@@ -158,12 +162,14 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['time/s'] = '<f8'
         elif colID == 5:
             dtype_dict['control/V/mA'] = '<f4'
-        elif colID == 6:
+        # 6 is Ewe, 77 is <Ewe>, I don't see the difference
+        elif colID in (6, 77):
             dtype_dict['Ewe/V'] = '<f4'
-        ## Not sure of the difference between 7 and 23 - they seem to be the same
-        elif colID == 7 or colID == 23:
+        # Can't see any difference between 7 and 23
+        elif colID in (7, 23):
             dtype_dict['dQ/mA.h'] = '<f8'
-        elif colID == 8:
+        # 76 is <I>, 8 is either I or <I> ??
+        elif colID in (8, 76):
             dtype_dict['I/mA'] = '<f4'
         elif colID == 11:
             dtype_dict['I/mA'] = '<f8'
@@ -171,10 +177,28 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['control/V'] = '<f4'
         elif colID == 24:
             dtype_dict['cycle number'] = '<f8'
+        elif colID == 32:
+            dtype_dict['freq/Hz'] = '<f4'
+        elif colID == 33:
+            dtype_dict['|Ewe|/V'] = '<f4'
+        elif colID == 34:
+            dtype_dict['|I|/A'] = '<f4'
+        elif colID == 35:
+            dtype_dict['Phase(Z)/deg'] = '<f4'
+        elif colID == 36:
+            dtype_dict['|Z|/Ohm'] = '<f4'
+        elif colID == 37:
+            dtype_dict['Re(Z)/Ohm'] = '<f4'
+        elif colID == 38:
+            dtype_dict['-Im(Z)/Ohm'] = '<f4'
+        elif colID == 39:
+            dtype_dict['I Range'] = '<u2'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
         elif colID == 434:
             dtype_dict['(Q-Qo)/C'] = '<f4'
+        elif colID == 435:
+            dtype_dict['dQ/C'] = '<f4'
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
