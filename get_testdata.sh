@@ -18,4 +18,8 @@ http://files.figshare.com/1778944/bio_logic6.mpt
 http://files.figshare.com/1778945/bio_logic1.mpt
 http://files.figshare.com/1778946/bio_logic3.mpr
 http://files.figshare.com/1780444/bio_logic4.mpr
+http://files.figshare.com/1780529/121_CA_455nm_6V_30min_C01.mpr
+http://files.figshare.com/1780530/121_CA_455nm_6V_30min_C01.mpt
+http://files.figshare.com/1780526/CV_C01.mpr
+http://files.figshare.com/1780527/CV_C01.mpt
 END_FILELIST

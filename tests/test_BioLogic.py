@@ -122,7 +122,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
 
     assert_array_almost_equal(mpr.data["time/s"],
                               mpt["time/s"],
-                              decimal=4)  # 5 digits in CSV
+                              decimal=2)  # 2 digits in CSV
 
     assert_field_matches("control/V/mA", decimal=6)
     assert_field_matches("control/V", decimal=6)
@@ -177,4 +177,19 @@ def test_MPR6_matches_MPT6():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic6.mpr'))
     mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic6.mpt'))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
+    assert_MPR_matches_MPT(mpr, mpt, comments)
+
+
+## Tests for issue #1 -- new dtypes ##
+
+
+def test_CV_C01():
+    mpr = MPRfile(os.path.join(testdata_dir, 'CV_C01.mpr'))
+    mpt, comments = MPTfile(os.path.join(testdata_dir, 'CV_C01.mpt'))
+    assert_MPR_matches_MPT(mpr, mpt, comments)
+
+
+def test_CA_455nm():
+    mpr = MPRfile(os.path.join(testdata_dir, '121-CA-455nm-6V_30min_C01.mpr'))
+    mpt, comments = MPTfile(os.path.join(testdata_dir, '121-CA-455nm-6V_30min_C01.mpt'))
     assert_MPR_matches_MPT(mpr, mpt, comments)

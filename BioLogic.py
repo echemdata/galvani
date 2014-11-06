@@ -9,7 +9,7 @@ import csv
 from os import SEEK_SET, SEEK_CUR
 import time
 from datetime import date, datetime, timedelta
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from warnings import warn
 
 import numpy as np
@@ -35,7 +35,9 @@ def fieldname_to_dtype(fieldname):
                        "|Ewe|/V", "|I|/A", "Phase(Z)/deg", "|Z|/Ohm",
                        "Re(Z)/Ohm", "-Im(Z)/Ohm"):
         return (fieldname, np.float_)
-    elif fieldname in ("cycle number", "I Range"):
+    # N.B. I'm not sure what 'Ns' is as in the only file I have with that
+    # header it never has any value other than '0'
+    elif fieldname in ("cycle number", "I Range", "Ns"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
@@ -45,6 +47,12 @@ def fieldname_to_dtype(fieldname):
         return ("Ewe/V", np.float_)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
+
+
+def comma_converter(float_string):
+    """Convert numbers to floats whether the decimal point is '.' or ','"""
+    trans_table = bytes.maketrans(b',', b'.')
+    return float(float_string.translate(trans_table))
 
 
 def MPTfile(file_or_path):
@@ -75,7 +83,11 @@ def MPTfile(file_or_path):
     fieldnames = str3(next(mpt_file)).strip().split('\t')
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
-    mpt_array = np.loadtxt(mpt_file, dtype=record_type)
+    ## Must be able to parse files where commas are used for decimal points
+    converter_dict = dict(((i, comma_converter)
+                           for i in range(len(fieldnames))))
+    mpt_array = np.loadtxt(mpt_file, dtype=record_type,
+                           converters=converter_dict)
 
     return mpt_array, comments
 
@@ -320,10 +332,16 @@ class MPRfile:
                                            dtype='<f8', count=1)
             ole_timestamp2 = np.fromstring(log_module['data'][469:],
                                            dtype='<f8', count=1)
+            ole_timestamp3 = np.fromstring(log_module['data'][473:],
+                                           dtype='<f8', count=1)
             if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
                 ole_timestamp = ole_timestamp1
             elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
                 ole_timestamp = ole_timestamp2
+            elif ole_timestamp3 > 40000 and ole_timestamp3 < 50000:
+                ole_timestamp = ole_timestamp3
+            else:
+                raise ValueError("Could not find timestamp in the LOG module")
 
             ole_base = datetime(1899, 12, 30, tzinfo=None)
             ole_timedelta = timedelta(days=ole_timestamp[0])
