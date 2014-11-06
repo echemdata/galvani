@@ -6,11 +6,10 @@ __all__ = ['MPTfileCSV', 'MPTfile']
 import sys
 import re
 import csv
-from os import SEEK_SET, SEEK_CUR
+from os import SEEK_SET
 import time
 from datetime import date, datetime, timedelta
-from collections import OrderedDict, defaultdict
-from warnings import warn
+from collections import OrderedDict
 
 import numpy as np
 
