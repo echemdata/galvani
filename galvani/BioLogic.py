@@ -16,8 +16,10 @@ import numpy as np
 
 if sys.version_info.major <= 2:
     str3 = str
+    from string import maketrans
 else:
     str3 = lambda b: str(b, encoding='ascii')
+    maketrans = bytes.maketrans
 
 
 def fieldname_to_dtype(fieldname):
@@ -50,7 +52,7 @@ def fieldname_to_dtype(fieldname):
 
 def comma_converter(float_string):
     """Convert numbers to floats whether the decimal point is '.' or ','"""
-    trans_table = bytes.maketrans(b',', b'.')
+    trans_table = maketrans(b',', b'.')
     return float(float_string.translate(trans_table))
 
 
