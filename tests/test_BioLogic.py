@@ -8,8 +8,8 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.tools import ok_, eq_, raises
 
-from .. import MPTfile, MPRfile
-from ..BioLogic import MPTfileCSV, str3  # not exported
+from galvani import MPTfile, MPRfile
+from galvani.BioLogic import MPTfileCSV, str3  # not exported
 
 testdata_dir = os.path.join(os.path.dirname(__file__), 'testdata')
 
