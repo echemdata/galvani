@@ -3,6 +3,7 @@
 ## Test data are posted on FigShare, listed in this article
 # http://figshare.com/articles/galvani_test_data/1228760
 
+mkdir -p tests/testdata
 cd tests/testdata
 
 /usr/bin/wget -i - <<END_FILELIST

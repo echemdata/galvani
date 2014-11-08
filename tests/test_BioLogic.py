@@ -15,7 +15,7 @@ testdata_dir = os.path.join(os.path.dirname(__file__), 'testdata')
 
 
 def test_open_MPT():
-    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic1.mpt'))
+    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpt'))
     eq_(comments, [])
     eq_(mpt1.dtype.names, ("mode", "ox/red", "error", "control changes",
                            "Ns changes", "counter inc.", "time/s",
@@ -25,11 +25,11 @@ def test_open_MPT():
 
 @raises(ValueError)
 def test_open_MPT_fails_for_bad_file():
-    mpt1 = MPTfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
+    mpt1 = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
 
 def test_open_MPT_csv():
-    mpt1, comments = MPTfileCSV(os.path.join(testdata_dir, 'bio-logic1.mpt'))
+    mpt1, comments = MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpt'))
     eq_(comments, [])
     eq_(mpt1.fieldnames, ["mode", "ox/red", "error", "control changes",
                           "Ns changes", "counter inc.", "time/s",
@@ -39,46 +39,46 @@ def test_open_MPT_csv():
 
 @raises(ValueError)
 def test_open_MPT_csv_fails_for_bad_file():
-    mpt1 = MPTfileCSV(os.path.join(testdata_dir, 'bio-logic1.mpr'))
+    mpt1 = MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
 
 def test_open_MPR1():
-    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
+    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
     ## Check the dates as a basic test that it has been read properly
     eq_(mpr1.startdate, date(2011, 10, 29))
     eq_(mpr1.enddate, date(2011, 10, 31))
 
 
 def test_open_MPR2():
-    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
+    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio_logic2.mpr'))
     ## Check the dates as a basic test that it has been read properly
     eq_(mpr2.startdate, date(2012, 9, 27))
     eq_(mpr2.enddate, date(2012, 9, 27))
 
 
 def test_open_MPR3():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic3.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic3.mpr'))
     ## Check the dates as a basic test that it has been read properly
     eq_(mpr.startdate, date(2013, 3, 27))
     eq_(mpr.enddate, date(2013, 3, 27))
 
 
 def test_open_MPR4():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic4.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic4.mpr'))
     ## Check the dates as a basic test that it has been read properly
     eq_(mpr.startdate, date(2011, 11, 1))
     eq_(mpr.enddate, date(2011, 11, 2))
 
 
 def test_open_MPR5():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic5.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic5.mpr'))
     ## Check the dates as a basic test that it has been read properly
     eq_(mpr.startdate, date(2013, 1, 28))
     eq_(mpr.enddate, date(2013, 1, 28))
 
 
 def test_open_MPR6():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic6.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic6.mpr'))
     ## Check the dates as a basic test that it has been read properly
     eq_(mpr.startdate, date(2012, 9, 11))
     ## no end date because no VMP LOG module
@@ -145,37 +145,37 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
 
 
 def test_MPR1_matches_MPT1():
-    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio-logic1.mpr'))
-    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic1.mpt'))
+    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
+    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpt'))
     assert_MPR_matches_MPT(mpr1, mpt1, comments)
 
 
 def test_MPR2_matches_MPT2():
-    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio-logic2.mpr'))
-    mpt2, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic2.mpt'))
+    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio_logic2.mpr'))
+    mpt2, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic2.mpt'))
     assert_MPR_matches_MPT(mpr2, mpt2, comments)
 
 
-## No bio-logic3.mpt file
+## No bio_logic3.mpt file
 
 
 def test_MPR4_matches_MPT4():
-    mpr4 = MPRfile(os.path.join(testdata_dir, 'bio-logic4.mpr'))
-    mpt4, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic4.mpt'))
+    mpr4 = MPRfile(os.path.join(testdata_dir, 'bio_logic4.mpr'))
+    mpt4, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic4.mpt'))
     assert_MPR_matches_MPT(mpr4, mpt4, comments)
 
 
 def test_MPR5_matches_MPT5():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic5.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic5.mpr'))
     mpt, comments = MPTfile((re.sub(b'\tXXX\t', b'\t0\t', line) for line in
-                             open(os.path.join(testdata_dir, 'bio-logic5.mpt'),
+                             open(os.path.join(testdata_dir, 'bio_logic5.mpt'),
                                   mode='rb')))
     assert_MPR_matches_MPT(mpr, mpt, comments)
 
 
 def test_MPR6_matches_MPT6():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio-logic6.mpr'))
-    mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio-logic6.mpt'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic6.mpr'))
+    mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic6.mpt'))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
     assert_MPR_matches_MPT(mpr, mpt, comments)
 
@@ -190,6 +190,6 @@ def test_CV_C01():
 
 
 def test_CA_455nm():
-    mpr = MPRfile(os.path.join(testdata_dir, '121-CA-455nm-6V_30min_C01.mpr'))
-    mpt, comments = MPTfile(os.path.join(testdata_dir, '121-CA-455nm-6V_30min_C01.mpt'))
+    mpr = MPRfile(os.path.join(testdata_dir, '121_CA_455nm_6V_30min_C01.mpr'))
+    mpt, comments = MPTfile(os.path.join(testdata_dir, '121_CA_455nm_6V_30min_C01.mpt'))
     assert_MPR_matches_MPT(mpr, mpt, comments)
