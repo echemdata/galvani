@@ -16,5 +16,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English'],
     packages=['galvani'],
+    scripts=['scripts/res2sqlite.py'],  # TODO make this use entry_points
     install_requires='numpy'
 )
