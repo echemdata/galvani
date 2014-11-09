@@ -17,5 +17,5 @@ setup(
         'Natural Language :: English'],
     packages=['galvani'],
     scripts=['scripts/res2sqlite.py'],  # TODO make this use entry_points
-    install_requires='numpy'
+    install_requires=['numpy']
 )
