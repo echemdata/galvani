@@ -13,12 +13,11 @@ from collections import OrderedDict
 
 import numpy as np
 
-
 if sys.version_info.major <= 2:
     str3 = str
     from string import maketrans
 else:
-    str3 = lambda b: str(b, encoding='ascii')
+    str3 = lambda b: str(b, encoding='ascii', errors='ignore')  # ignore no ascii chars
     maketrans = bytes.maketrans
 
 
@@ -38,7 +37,7 @@ def fieldname_to_dtype(fieldname):
         return (fieldname, np.float_)
     # N.B. I'm not sure what 'Ns' is as in the only file I have with that
     # header it never has any value other than '0'
-    elif fieldname in ("cycle number", "I Range", "Ns"):
+    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
@@ -47,13 +46,17 @@ def fieldname_to_dtype(fieldname):
     elif fieldname in ("Ewe/V", "<Ewe>/V"):
         return ("Ewe/V", np.float_)
     else:
-        raise ValueError("Invalid column header: %s" % fieldname)
+        # convert unknown field to float
+        return (fieldname, np.float_)
 
 
 def comma_converter(float_string):
-    """Convert numbers to floats whether the decimal point is '.' or ','"""
+    """Convert numbers to floats whether the decimal point is '.' or ','. Non number values treated as NaN"""
     trans_table = maketrans(b',', b'.')
-    return float(float_string.translate(trans_table))
+    try:
+        return float(float_string.translate(trans_table))
+    except ValueError:
+        return float('NaN')  # return NaN if non number input, some files have 'XXX' values
 
 
 def MPTfile(file_or_path):
@@ -304,13 +307,13 @@ class MPRfile:
                              data_module['version'])
 
         if sys.version_info.major <= 2:
-            assert(all((b == '\x00' for b in remaining_headers)))
+            assert (all((b == '\x00' for b in remaining_headers)))
         else:
-            assert(not any(remaining_headers))
+            assert (not any(remaining_headers))
 
         self.dtype, self.flags_dict, self.flags2_dict = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.fromstring(main_data, dtype=self.dtype)
-        assert(self.data.shape[0] == n_data_points)
+        assert (self.data.shape[0] == n_data_points)
 
         ## No idea what these 'column types' mean or even if they are actually
         ## column types at all

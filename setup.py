@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='galvani',
-    version='0.0.1a1',
+    version='0.0.2 Denn',
     description='Open and process battery charger log data files',
     url='https://github.com/chatcannon/galvani',
     author='Chris Kerr',
