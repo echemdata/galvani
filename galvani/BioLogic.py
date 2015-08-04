@@ -38,7 +38,7 @@ def fieldname_to_dtype(fieldname):
         return (fieldname, np.float_)
     # N.B. I'm not sure what 'Ns' is as in the only file I have with that
     # header it never has any value other than '0'
-    elif fieldname in ("cycle number", "I Range", "Ns"):
+    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
