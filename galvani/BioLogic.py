@@ -35,8 +35,6 @@ def fieldname_to_dtype(fieldname):
                        "|Ewe|/V", "|I|/A", "Phase(Z)/deg", "|Z|/Ohm",
                        "Re(Z)/Ohm", "-Im(Z)/Ohm"):
         return (fieldname, np.float_)
-    # N.B. I'm not sure what 'Ns' is as in the only file I have with that
-    # header it never has any value other than '0'
     elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
@@ -170,10 +168,12 @@ def VMPdata_dtype_from_colIDs(colIDs):
                 flags_dict['counter inc.'] = (np.uint8(0x80), np.bool_)
             else:
                 raise NotImplementedError("flag %d not implemented" % colID)
-        elif colID in (131,):
-            dtype_dict['flags2'] = '<u2'
-            if colID == 131:
-                flags2_dict['??'] = (np.uint16(0x0001), np.bool_)
+        # elif colID in (131,):
+        #     dtype_dict['flags2'] = '<u2'
+        #     if colID == 131:
+        #         flags2_dict['??'] = (np.uint16(0x0001), np.bool_)
+        elif colID == 131: #not flags
+            dtype_dict['Ns'] = '<u2'
         elif colID == 4:
             dtype_dict['time/s'] = '<f8'
         elif colID == 5:
@@ -215,6 +215,17 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['(Q-Qo)/C'] = '<f4'
         elif colID == 435:
             dtype_dict['dQ/C'] = '<f4'
+    #new colIDs
+        elif colID == 13:
+            dtype_dict['(Q-Qo)/mA.h'] = '<f8'
+        elif colID == 467:
+            dtype_dict['Q charge/discharge/mA.h'] = '<f8'
+        elif colID == 468:
+            dtype_dict['half cycle'] = '<u4'
+        elif colID == 126:
+            dtype_dict['Capacitance discharge/µF'] = '<f8'
+        elif colID == 125:
+            dtype_dict['Capacitance charge/µF'] = '<f8'
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
@@ -286,7 +297,7 @@ class MPRfile:
         self.modules = modules
         settings_mod, = (m for m in modules if m['shortname'] == b'VMP Set   ')
         data_module, = (m for m in modules if m['shortname'] == b'VMP data  ')
-        maybe_log_module = [m for m in modules if m['shortname'] == b'VMP LOG   ']
+        maybe_log_module = []#[m for m in modules if m['shortname'] == b'VMP LOG   ']
 
         n_data_points = np.fromstring(data_module['data'][:4], dtype='<u4')
         n_columns = np.fromstring(data_module['data'][4:5], dtype='u1')
@@ -329,32 +340,32 @@ class MPRfile:
             tm = time.strptime(str3(log_module['date']), '%m/%d/%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
-            ## There is a timestamp at either 465 or 469 bytes
-            ## I can't find any reason why it is one or the other in any
-            ## given file
-            ole_timestamp1 = np.fromstring(log_module['data'][465:],
-                                           dtype='<f8', count=1)
-            ole_timestamp2 = np.fromstring(log_module['data'][469:],
-                                           dtype='<f8', count=1)
-            ole_timestamp3 = np.fromstring(log_module['data'][473:],
-                                           dtype='<f8', count=1)
-            if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
-                ole_timestamp = ole_timestamp1
-            elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
-                ole_timestamp = ole_timestamp2
-            elif ole_timestamp3 > 40000 and ole_timestamp3 < 50000:
-                ole_timestamp = ole_timestamp3
-            else:
-                raise ValueError("Could not find timestamp in the LOG module")
-
-            ole_base = datetime(1899, 12, 30, tzinfo=None)
-            ole_timedelta = timedelta(days=ole_timestamp[0])
-            self.timestamp = ole_base + ole_timedelta
-            if self.startdate != self.timestamp.date():
-                raise ValueError("""Date mismatch:
-                Start date: %s
-                End date: %s
-                Timestamp: %s""" % (self.startdate, self.enddate, self.timestamp))
+            # ## There is a timestamp at either 465 or 469 bytes
+            # ## I can't find any reason why it is one or the other in any
+            # ## given file
+            # ole_timestamp1 = np.fromstring(log_module['data'][465:],
+            #                                dtype='<f8', count=1)
+            # ole_timestamp2 = np.fromstring(log_module['data'][469:],
+            #                                dtype='<f8', count=1)
+            # ole_timestamp3 = np.fromstring(log_module['data'][473:],
+            #                                dtype='<f8', count=1)
+            # if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
+            #     ole_timestamp = ole_timestamp1
+            # elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
+            #     ole_timestamp = ole_timestamp2
+            # elif ole_timestamp3 > 40000 and ole_timestamp3 < 50000:
+            #     ole_timestamp = ole_timestamp3
+            # else:
+            #     raise ValueError("Could not find timestamp in the LOG module")
+            #
+            # ole_base = datetime(1899, 12, 30, tzinfo=None)
+            # ole_timedelta = timedelta(days=ole_timestamp[0])
+            # self.timestamp = ole_base + ole_timedelta
+            # if self.startdate != self.timestamp.date():
+            #     raise ValueError("""Date mismatch:
+            #     Start date: %s
+            #     End date: %s
+            #     Timestamp: %s""" % (self.startdate, self.enddate, self.timestamp))
 
     def get_flag(self, flagname):
         if flagname in self.flags_dict:
