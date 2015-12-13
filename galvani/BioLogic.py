@@ -226,6 +226,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Capacitance discharge/µF'] = '<f8'
         elif colID == 125:
             dtype_dict['Capacitance charge/µF'] = '<f8'
+        elif colID == 9:
+            dtype_dict['Ece/V'] = '<f4'
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
