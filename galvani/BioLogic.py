@@ -178,6 +178,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
         # 76 is <I>, 8 is either I or <I> ??
         elif colID in (8, 76):
             dtype_dict['I/mA'] = '<f4'
+        elif colID == 9:
+            dtype_dict['Ece/V'] = '<f4'
         elif colID == 11:
             dtype_dict['I/mA'] = '<f8'
         elif colID == 13:
