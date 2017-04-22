@@ -1,5 +1,9 @@
 sudo: false
 language: python
+cache:
+  directories:
+    - .tox
+    - tests/testdata
 python:
   - "2.7"
   - "3.5"
