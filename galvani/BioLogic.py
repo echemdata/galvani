@@ -287,6 +287,7 @@ class MPRfile:
 
         n_data_points = np.fromstring(data_module['data'][:4], dtype='<u4')
         n_columns = np.fromstring(data_module['data'][4:5], dtype='u1')
+        n_columns = np.asscalar(n_columns)  # Compatibility with recent numpy
 
         if data_module['version'] == 0:
             column_types = np.fromstring(data_module['data'][5:], dtype='u1',
