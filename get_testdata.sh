@@ -6,7 +6,7 @@
 mkdir -p tests/testdata
 cd tests/testdata
 
-/usr/bin/wget -i - <<END_FILELIST
+/usr/bin/wget --continue -i - <<END_FILELIST
 http://files.figshare.com/1778905/arbin1.res
 http://files.figshare.com/1778937/bio_logic2.mpt
 http://files.figshare.com/1778938/bio_logic5.mpt
