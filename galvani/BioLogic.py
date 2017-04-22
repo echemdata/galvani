@@ -36,9 +36,7 @@ def fieldname_to_dtype(fieldname):
                        "|Ewe|/V", "|I|/A", "Phase(Z)/deg", "|Z|/Ohm",
                        "Re(Z)/Ohm", "-Im(Z)/Ohm"):
         return (fieldname, np.float_)
-    # N.B. I'm not sure what 'Ns' is as in the only file I have with that
-    # header it never has any value other than '0'
-    elif fieldname in ("cycle number", "I Range", "Ns"):
+    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
@@ -167,10 +165,6 @@ def VMPdata_dtype_from_colIDs(colIDs):
                 flags_dict['counter inc.'] = (np.uint8(0x80), np.bool_)
             else:
                 raise NotImplementedError("flag %d not implemented" % colID)
-        elif colID in (131,):
-            dtype_dict['flags2'] = '<u2'
-            if colID == 131:
-                flags2_dict['??'] = (np.uint16(0x0001), np.bool_)
         elif colID == 4:
             dtype_dict['time/s'] = '<f8'
         elif colID == 5:
@@ -184,8 +178,12 @@ def VMPdata_dtype_from_colIDs(colIDs):
         # 76 is <I>, 8 is either I or <I> ??
         elif colID in (8, 76):
             dtype_dict['I/mA'] = '<f4'
+        elif colID == 9:
+            dtype_dict['Ece/V'] = '<f4'
         elif colID == 11:
             dtype_dict['I/mA'] = '<f8'
+        elif colID == 13:
+            dtype_dict['(Q-Qo)/mA.h'] = '<f8'
         elif colID == 19:
             dtype_dict['control/V'] = '<f4'
         elif colID == 24:
@@ -208,10 +206,20 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['I Range'] = '<u2'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
+        elif colID == 125:
+            dtype_dict['Capacitance charge/µF'] = '<f8'
+        elif colID == 126:
+            dtype_dict['Capacitance discharge/µF'] = '<f8'
+        elif colID == 131:
+            dtype_dict['Ns'] = '<u2'
         elif colID == 434:
             dtype_dict['(Q-Qo)/C'] = '<f4'
         elif colID == 435:
             dtype_dict['dQ/C'] = '<f4'
+        elif colID == 467:
+            dtype_dict['Q charge/discharge/mA.h'] = '<f8'
+        elif colID == 468:
+            dtype_dict['half cycle'] = '<u4'
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
