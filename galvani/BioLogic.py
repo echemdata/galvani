@@ -212,6 +212,10 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Capacitance discharge/µF'] = '<f8'
         elif colID == 131:
             dtype_dict['Ns'] = '<u2'
+        elif colID == 169:
+            dtype_dict['Cs/µF'] = '<f4'
+        elif colID == 172:
+            dtype_dict['Cp/µF'] = '<f4'
         elif colID == 434:
             dtype_dict['(Q-Qo)/C'] = '<f4'
         elif colID == 435:
@@ -344,12 +348,18 @@ class MPRfile:
                                            dtype='<f8', count=1)
             ole_timestamp3 = np.fromstring(log_module['data'][473:],
                                            dtype='<f8', count=1)
+            ole_timestamp4 = np.fromstring(log_module['data'][585:],
+                                           dtype='<f8', count=1)
+
             if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
                 ole_timestamp = ole_timestamp1
             elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
                 ole_timestamp = ole_timestamp2
             elif ole_timestamp3 > 40000 and ole_timestamp3 < 50000:
                 ole_timestamp = ole_timestamp3
+            elif ole_timestamp4 > 40000 and ole_timestamp4 < 50000:
+                ole_timestamp = ole_timestamp4
+    
             else:
                 raise ValueError("Could not find timestamp in the LOG module")
 
