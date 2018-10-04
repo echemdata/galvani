@@ -208,6 +208,10 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['I Range'] = '<u2'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
+        elif colID == 123:
+            dtype_dict['Energy charge/W.h'] = '<f8'
+        elif colID == 124:
+            dtype_dict['Energy discharge/W.h'] = '<f8'
         elif colID == 125:
             dtype_dict['Capacitance charge/µF'] = '<f8'
         elif colID == 126:
