@@ -186,6 +186,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['(Q-Qo)/mA.h'] = '<f8'
         elif colID == 19:
             dtype_dict['control/V'] = '<f4'
+        elif colID == 20:
+            dtype_dict['control/mA'] = '<f4'
         elif colID == 24:
             dtype_dict['cycle number'] = '<f8'
         elif colID == 32:
@@ -224,7 +226,20 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Q charge/discharge/mA.h'] = '<f8'
         elif colID == 468:
             dtype_dict['half cycle'] = '<u4'
+        elif colID == 473:
+            dtype_dict['THD Ewe/%'] = '<f4'
+        elif colID == 476:
+            dtype_dict['NSD Ewe/%'] = '<f4'
+        elif colID == 479:
+            dtype_dict['NSR Ewe/%'] = '<f4'
+        elif colID == 474:
+            dtype_dict['THD I/%'] = '<f4'
+        elif colID == 477:
+            dtype_dict['NSD I/%'] = '<f4'
+        elif colID == 480:
+            dtype_dict['NSR I/%'] = '<f4'
         else:
+            print(dtype_dict)
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
 
