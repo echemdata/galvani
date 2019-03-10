@@ -22,10 +22,11 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Natural Language :: English'],
+        'Natural Language :: English',
+    ],
     packages=['galvani'],
     entry_points={'console_scripts': [
             'res2sqlite = galvani.res2sqlite:main',
     ]},
-    install_requires=['numpy']
+    install_requires=['numpy'],
 )
