@@ -9,7 +9,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
 
 setup(
     name='galvani',
-    version='0.0.1a1',
+    version='0.0.1',
     description='Open and process battery charger log data files',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -18,7 +18,7 @@ setup(
     author_email='chris.kerr@mykolab.ch',
     license='GPLv3+',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
