@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 
+import os.path
+
 from setuptools import setup
+
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
+    readme = f.read()
 
 setup(
     name='galvani',
     version='0.0.1a1',
     description='Open and process battery charger log data files',
+    long_description=readme,
+    long_description_content_type="text/markdown",
     url='https://github.com/chatcannon/galvani',
     author='Chris Kerr',
     author_email='chris.kerr@mykolab.ch',
