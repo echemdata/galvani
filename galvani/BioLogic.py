@@ -186,6 +186,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['(Q-Qo)/mA.h'] = '<f8'
         elif colID == 19:
             dtype_dict['control/V'] = '<f4'
+        elif colID == 20:
+            dtype_dict['control/mA'] = '<f4'
         elif colID == 24:
             dtype_dict['cycle number'] = '<f8'
         elif colID == 32:
@@ -206,12 +208,20 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['I Range'] = '<u2'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
+        elif colID == 123:
+            dtype_dict['Energy charge/W.h'] = '<f8'
+        elif colID == 124:
+            dtype_dict['Energy discharge/W.h'] = '<f8'
         elif colID == 125:
             dtype_dict['Capacitance charge/µF'] = '<f8'
         elif colID == 126:
             dtype_dict['Capacitance discharge/µF'] = '<f8'
         elif colID == 131:
             dtype_dict['Ns'] = '<u2'
+        elif colID == 169:
+            dtype_dict['Cs/µF'] = '<f4'
+        elif colID == 172:
+            dtype_dict['Cp/µF'] = '<f4'
         elif colID == 434:
             dtype_dict['(Q-Qo)/C'] = '<f4'
         elif colID == 435:
@@ -220,7 +230,20 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Q charge/discharge/mA.h'] = '<f8'
         elif colID == 468:
             dtype_dict['half cycle'] = '<u4'
+        elif colID == 473:
+            dtype_dict['THD Ewe/%'] = '<f4'
+        elif colID == 476:
+            dtype_dict['NSD Ewe/%'] = '<f4'
+        elif colID == 479:
+            dtype_dict['NSR Ewe/%'] = '<f4'
+        elif colID == 474:
+            dtype_dict['THD I/%'] = '<f4'
+        elif colID == 477:
+            dtype_dict['NSD I/%'] = '<f4'
+        elif colID == 480:
+            dtype_dict['NSR I/%'] = '<f4'
         else:
+            print(dtype_dict)
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
 
@@ -234,7 +257,7 @@ def read_VMP_modules(fileobj, read_module_data=True):
     while True:
         module_magic = fileobj.read(len(b'MODULE'))
         if len(module_magic) == 0:  # end of file
-            raise StopIteration
+            break
         elif module_magic != b'MODULE':
             raise ValueError("Found %r, expecting start of new VMP MODULE" % module_magic)
 
@@ -344,12 +367,18 @@ class MPRfile:
                                            dtype='<f8', count=1)
             ole_timestamp3 = np.fromstring(log_module['data'][473:],
                                            dtype='<f8', count=1)
+            ole_timestamp4 = np.fromstring(log_module['data'][585:],
+                                           dtype='<f8', count=1)
+
             if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
                 ole_timestamp = ole_timestamp1
             elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
                 ole_timestamp = ole_timestamp2
             elif ole_timestamp3 > 40000 and ole_timestamp3 < 50000:
                 ole_timestamp = ole_timestamp3
+            elif ole_timestamp4 > 40000 and ole_timestamp4 < 50000:
+                ole_timestamp = ole_timestamp4
+    
             else:
                 raise ValueError("Could not find timestamp in the LOG module")
 
