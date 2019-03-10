@@ -350,7 +350,7 @@ CREATE VIEW IF NOT EXISTS Capacity_View
 """
 
 
-def mdb_get_data_text(filename, table):
+def mdb_get_data_text(s3db, filename, table):
     print("Reading %s..." % table)
     try:
         mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
@@ -373,7 +373,7 @@ def mdb_get_data_text(filename, table):
         mdb_sql.terminate()
 
 
-def mdb_get_data_numeric(filename, table):
+def mdb_get_data_numeric(s3db, filename, table):
     print("Reading %s..." % table)
     try:
         mdb_sql = sp.Popen(['mdb-export', filename, table],
@@ -392,45 +392,55 @@ def mdb_get_data_numeric(filename, table):
         mdb_sql.terminate()
 
 
-def mdb_get_data(filename, table):
+def mdb_get_data(s3db, filename, table):
     if table in mdb_tables_text:
-        mdb_get_data_text(filename, table)
+        mdb_get_data_text(s3db, filename, table)
     elif table in mdb_tables_numeric:
-        mdb_get_data_numeric(filename, table)
+        mdb_get_data_numeric(s3db, filename, table)
     else:
         raise ValueError("'%s' is in neither mdb_tables_text nor mdb_tables_numeric" % table)
 
 
-## Main part of the script
+def convert_arbin_to_sqlite(input_file, output_file):
+    """Read data from an Arbin .res data file and write to a sqlite file.
 
-parser = argparse.ArgumentParser(description="Convert Arbin .res files to sqlite3 databases using mdb-export")
-parser.add_argument('input_file', type=str)  # need file name to pass to sp.Popen
-parser.add_argument('output_file', type=str)  # need file name to pass to sqlite3.connect
-
-args = parser.parse_args()
-
-s3db = sqlite3.connect(args.output_file)
-
-
-for table in reversed(mdb_tables + mdb_5_23_tables):
-    s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
-
-for table in mdb_tables:
-    s3db.executescript(mdb_create_scripts[table])
-    mdb_get_data(args.input_file, table)
-    if table in mdb_create_indices:
-        print("Creating indices for %s..." % table)
-        s3db.executescript(mdb_create_indices[table])
-
-if (s3db.execute("SELECT Version_Schema_Field FROM Version_Table;").fetchone()[0] == "Results File 5.23"):
-    for table in mdb_5_23_tables:
+    Any data currently in the sqlite file will be erased!
+    """
+    s3db = sqlite3.connect(output_file)
+    
+    
+    for table in reversed(mdb_tables + mdb_5_23_tables):
+        s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
+    
+    for table in mdb_tables:
         s3db.executescript(mdb_create_scripts[table])
-        mdb_get_data(args.input_file, table)
+        mdb_get_data(s3db, input_file, table)
         if table in mdb_create_indices:
+            print("Creating indices for %s..." % table)
             s3db.executescript(mdb_create_indices[table])
+    
+    if (s3db.execute("SELECT Version_Schema_Field FROM Version_Table;").fetchone()[0] == "Results File 5.23"):
+        for table in mdb_5_23_tables:
+            s3db.executescript(mdb_create_scripts[table])
+            mdb_get_data(input_file, table)
+            if table in mdb_create_indices:
+                s3db.executescript(mdb_create_indices[table])
+    
+    print("Creating helper table for capacity and energy totals...")
+    s3db.executescript(helper_table_script)
+    
+    print("Vacuuming database...")
+    s3db.executescript("VACUUM; ANALYZE;")
 
-print("Creating helper table for capacity and energy totals...")
-s3db.executescript(helper_table_script)
 
-print("Vacuuming database...")
-s3db.executescript("VACUUM; ANALYZE;")
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Convert Arbin .res files to sqlite3 databases using mdb-export")
+    parser.add_argument('input_file', type=str)  # need file name to pass to sp.Popen
+    parser.add_argument('output_file', type=str)  # need file name to pass to sqlite3.connect
+
+    args = parser.parse_args(argv)
+    convert_arbin_to_sqlite(args.input_file, args.output_file)
+
+
+if __name__ == '__main__':
+    main()
