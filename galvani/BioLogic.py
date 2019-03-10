@@ -257,7 +257,7 @@ def read_VMP_modules(fileobj, read_module_data=True):
     while True:
         module_magic = fileobj.read(len(b'MODULE'))
         if len(module_magic) == 0:  # end of file
-            raise StopIteration
+            break
         elif module_magic != b'MODULE':
             raise ValueError("Found %r, expecting start of new VMP MODULE" % module_magic)
 
