@@ -8,6 +8,7 @@ setup(
     description='Open and process battery charger log data files',
     url='https://github.com/chatcannon/galvani',
     author='Chris Kerr',
+    author_email='chris.kerr@mykolab.ch',
     license='GPLv3+',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -16,6 +17,8 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English'],
     packages=['galvani'],
-    scripts=['scripts/res2sqlite.py'],  # TODO make this use entry_points
+    entry_points={'console_scripts': [
+            'res2sqlite = galvani.res2sqlite:main',
+    ]},
     install_requires=['numpy']
 )
