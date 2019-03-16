@@ -6,7 +6,7 @@ from datetime import date, datetime
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from nose.tools import ok_, eq_, raises
+from nose.tools import ok_, raises
 
 from galvani import MPTfile, MPRfile
 from galvani.BioLogic import MPTfileCSV, str3  # not exported
@@ -16,11 +16,12 @@ testdata_dir = os.path.join(os.path.dirname(__file__), 'testdata')
 
 def test_open_MPT():
     mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpt'))
-    eq_(comments, [])
-    eq_(mpt1.dtype.names, ("mode", "ox/red", "error", "control changes",
-                           "Ns changes", "counter inc.", "time/s",
-                           "control/V/mA", "Ewe/V", "dQ/mA.h", "P/W",
-                           "I/mA", "(Q-Qo)/mA.h", "x"))
+    assert comments == []
+    assert mpt1.dtype.names == (
+        "mode", "ox/red", "error", "control changes", "Ns changes",
+        "counter inc.", "time/s", "control/V/mA", "Ewe/V", "dQ/mA.h", "P/W",
+        "I/mA", "(Q-Qo)/mA.h", "x",
+    )
 
 
 @raises(ValueError)
@@ -30,11 +31,12 @@ def test_open_MPT_fails_for_bad_file():
 
 def test_open_MPT_csv():
     mpt1, comments = MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpt'))
-    eq_(comments, [])
-    eq_(mpt1.fieldnames, ["mode", "ox/red", "error", "control changes",
-                          "Ns changes", "counter inc.", "time/s",
-                          "control/V/mA", "Ewe/V", "dq/mA.h", "P/W",
-                          "<I>/mA", "(Q-Qo)/mA.h", "x"])
+    assert comments == []
+    assert mpt1.fieldnames == [
+        "mode", "ox/red", "error", "control changes", "Ns changes",
+        "counter inc.", "time/s", "control/V/mA", "Ewe/V", "dq/mA.h", "P/W",
+        "<I>/mA", "(Q-Qo)/mA.h", "x",
+    ]
 
 
 @raises(ValueError)
@@ -43,44 +45,44 @@ def test_open_MPT_csv_fails_for_bad_file():
 
 
 def test_open_MPR1():
-    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr1.startdate, date(2011, 10, 29))
-    eq_(mpr1.enddate, date(2011, 10, 31))
+    assert mpr.startdate == date(2011, 10, 29)
+    assert mpr.enddate == date(2011, 10, 31)
 
 
 def test_open_MPR2():
-    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio_logic2.mpr'))
+    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic2.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr2.startdate, date(2012, 9, 27))
-    eq_(mpr2.enddate, date(2012, 9, 27))
+    assert mpr.startdate == date(2012, 9, 27)
+    assert mpr.enddate == date(2012, 9, 27)
 
 
 def test_open_MPR3():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic3.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr.startdate, date(2013, 3, 27))
-    eq_(mpr.enddate, date(2013, 3, 27))
+    assert mpr.startdate == date(2013, 3, 27)
+    assert mpr.enddate == date(2013, 3, 27)
 
 
 def test_open_MPR4():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic4.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr.startdate, date(2011, 11, 1))
-    eq_(mpr.enddate, date(2011, 11, 2))
+    assert mpr.startdate == date(2011, 11, 1)
+    assert mpr.enddate == date(2011, 11, 2)
 
 
 def test_open_MPR5():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic5.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr.startdate, date(2013, 1, 28))
-    eq_(mpr.enddate, date(2013, 1, 28))
+    assert mpr.startdate == date(2013, 1, 28)
+    assert mpr.enddate == date(2013, 1, 28)
 
 
 def test_open_MPR6():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic6.mpr'))
     ## Check the dates as a basic test that it has been read properly
-    eq_(mpr.startdate, date(2012, 9, 11))
+    assert mpr.startdate == date(2012, 9, 11)
     ## no end date because no VMP LOG module
 
 
@@ -139,7 +141,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     assert_field_matches("(Q-Qo)/C", decimal=6)  # 32 bit float precision
     
     try:
-        eq_(timestamp_from_comments(comments), mpr.timestamp)
+        assert timestamp_from_comments(comments) == mpr.timestamp
     except AttributeError:
         pass
 
