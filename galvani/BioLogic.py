@@ -327,8 +327,7 @@ class MPRfile:
         maybe_log_module = [m for m in modules if m['shortname'] == b'VMP LOG   ']
 
         n_data_points = np.frombuffer(data_module['data'][:4], dtype='<u4')
-        n_columns = np.frombuffer(data_module['data'][4:5], dtype='u1')
-        n_columns = np.asscalar(n_columns)  # Compatibility with recent numpy
+        n_columns = np.frombuffer(data_module['data'][4:5], dtype='u1').item()
 
         if data_module['version'] == 0:
             column_types = np.frombuffer(data_module['data'][5:], dtype='u1',
