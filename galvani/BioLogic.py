@@ -184,6 +184,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['I/mA'] = '<f8'
         elif colID == 13:
             dtype_dict['(Q-Qo)/mA.h'] = '<f8'
+        elif colID == 16:
+            dtype_dict['Analog IN 1/V'] = '<f4'
         elif colID == 19:
             dtype_dict['control/V'] = '<f4'
         elif colID == 20:
@@ -208,6 +210,10 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['I Range'] = '<u2'
         elif colID == 70:
             dtype_dict['P/W'] = '<f4'
+        elif colID == 74:
+            dtype_dict['Energy/W.h'] = '<f8'
+        elif colID == 78:
+            dtype_dict['Cs-2/µf-2'] = '<f4'
         elif colID == 123:
             dtype_dict['Energy charge/W.h'] = '<f8'
         elif colID == 124:
@@ -222,6 +228,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Cs/µF'] = '<f4'
         elif colID == 172:
             dtype_dict['Cp/µF'] = '<f4'
+        elif colID == 173:
+            dtype_dict['Cp-2/µF-2'] = '<f4'
         elif colID == 434:
             dtype_dict['(Q-Qo)/C'] = '<f4'
         elif colID == 435:
@@ -230,6 +238,8 @@ def VMPdata_dtype_from_colIDs(colIDs):
             dtype_dict['Q charge/discharge/mA.h'] = '<f8'
         elif colID == 468:
             dtype_dict['half cycle'] = '<u4'
+        elif colID == 469:
+            dtype_dict['z cycle'] = '<u4'
         elif colID == 473:
             dtype_dict['THD Ewe/%'] = '<f4'
         elif colID == 476:
