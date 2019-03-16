@@ -29,4 +29,5 @@ setup(
             'res2sqlite = galvani.res2sqlite:main',
     ]},
     install_requires=['numpy'],
+    tests_require=['pytest'],
 )
