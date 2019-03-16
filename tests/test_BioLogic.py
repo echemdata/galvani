@@ -6,7 +6,7 @@ from datetime import date, datetime
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from nose.tools import ok_, raises
+import pytest
 
 from galvani import MPTfile, MPRfile
 from galvani.BioLogic import MPTfileCSV, str3  # not exported
@@ -24,9 +24,9 @@ def test_open_MPT():
     )
 
 
-@raises(ValueError)
 def test_open_MPT_fails_for_bad_file():
-    mpt1 = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
+    with pytest.raises(ValueError, match='Bad first line'):
+        MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
 
 def test_open_MPT_csv():
@@ -39,9 +39,9 @@ def test_open_MPT_csv():
     ]
 
 
-@raises(ValueError)
 def test_open_MPT_csv_fails_for_bad_file():
-    mpt1 = MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpr'))
+    with pytest.raises((ValueError, UnicodeDecodeError)):
+        MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
 
 def test_open_MPR1():
@@ -86,9 +86,9 @@ def test_open_MPR6():
     ## no end date because no VMP LOG module
 
 
-@raises(ValueError)
 def test_open_MPR_fails_for_bad_file():
-    mpr1 = MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
+    with pytest.raises(ValueError, match='Invalid magic for .mpr file'):
+        MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
 
 
 def timestamp_from_comments(comments):
