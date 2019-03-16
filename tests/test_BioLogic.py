@@ -2,7 +2,7 @@
 
 import os.path
 import re
-from datetime import date, datetime
+from datetime import datetime
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -44,46 +44,23 @@ def test_open_MPT_csv_fails_for_bad_file():
         MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
 
-def test_open_MPR1():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
-    ## Check the dates as a basic test that it has been read properly
-    assert mpr.startdate == date(2011, 10, 29)
-    assert mpr.enddate == date(2011, 10, 31)
-
-
-def test_open_MPR2():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic2.mpr'))
-    ## Check the dates as a basic test that it has been read properly
-    assert mpr.startdate == date(2012, 9, 27)
-    assert mpr.enddate == date(2012, 9, 27)
-
-
-def test_open_MPR3():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic3.mpr'))
-    ## Check the dates as a basic test that it has been read properly
-    assert mpr.startdate == date(2013, 3, 27)
-    assert mpr.enddate == date(2013, 3, 27)
-
-
-def test_open_MPR4():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic4.mpr'))
-    ## Check the dates as a basic test that it has been read properly
-    assert mpr.startdate == date(2011, 11, 1)
-    assert mpr.enddate == date(2011, 11, 2)
-
-
-def test_open_MPR5():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic5.mpr'))
-    ## Check the dates as a basic test that it has been read properly
-    assert mpr.startdate == date(2013, 1, 28)
-    assert mpr.enddate == date(2013, 1, 28)
-
-
-def test_open_MPR6():
-    mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic6.mpr'))
-    ## Check the dates as a basic test that it has been read properly
-    assert mpr.startdate == date(2012, 9, 11)
-    ## no end date because no VMP LOG module
+@pytest.mark.parametrize('filename, startdate, enddate', [
+    ('bio_logic1.mpr', '2011-10-29', '2011-10-31'),
+    ('bio_logic2.mpr', '2012-09-27', '2012-09-27'),
+    ('bio_logic3.mpr', '2013-03-27', '2013-03-27'),
+    ('bio_logic4.mpr', '2011-11-01', '2011-11-02'),
+    ('bio_logic5.mpr', '2013-01-28', '2013-01-28'),
+    # bio_logic6.mpr has no end date because it does not have a VMP LOG module
+    ('bio_logic6.mpr', '2012-09-11', None),
+])
+def test_MPR_dates(filename, startdate, enddate):
+    """Check that the start and end dates in .mpr files are read correctly."""
+    mpr = MPRfile(os.path.join(testdata_dir, filename))
+    assert mpr.startdate.strftime('%Y-%m-%d') == startdate
+    if enddate:
+        mpr.enddate.strftime('%Y-%m-%d') == enddate
+    else:
+        assert not hasattr(mpr, 'enddate')
 
 
 def test_open_MPR_fails_for_bad_file():
@@ -146,25 +123,26 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
         pass
 
 
-def test_MPR1_matches_MPT1():
-    mpr1 = MPRfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
-    mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpt'))
-    assert_MPR_matches_MPT(mpr1, mpt1, comments)
+@pytest.mark.parametrize('basename', [
+    'bio_logic1',
+    'bio_logic2',
+    # No bio_logic3.mpt file
+    'bio_logic4',
+    # bio_logic5 and bio_logic6 are special cases
+    'CV_C01',
+    '121_CA_455nm_6V_30min_C01',
+])
+def test_MPR_matches_MPT(basename):
+    """Check the MPR parser against the MPT parser.
 
-
-def test_MPR2_matches_MPT2():
-    mpr2 = MPRfile(os.path.join(testdata_dir, 'bio_logic2.mpr'))
-    mpt2, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic2.mpt'))
-    assert_MPR_matches_MPT(mpr2, mpt2, comments)
-
-
-## No bio_logic3.mpt file
-
-
-def test_MPR4_matches_MPT4():
-    mpr4 = MPRfile(os.path.join(testdata_dir, 'bio_logic4.mpr'))
-    mpt4, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic4.mpt'))
-    assert_MPR_matches_MPT(mpr4, mpt4, comments)
+    Load a binary .mpr file and a text .mpt file which should contain
+    exactly the same data. Check that the loaded data actually match.
+    """
+    binpath = os.path.join(testdata_dir, basename + '.mpr')
+    txtpath = os.path.join(testdata_dir, basename + '.mpt')
+    mpr = MPRfile(binpath)
+    mpt, comments = MPTfile(txtpath)
+    assert_MPR_matches_MPT(mpr, mpt, comments)
 
 
 def test_MPR5_matches_MPT5():
@@ -179,19 +157,4 @@ def test_MPR6_matches_MPT6():
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic6.mpr'))
     mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic6.mpt'))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
-    assert_MPR_matches_MPT(mpr, mpt, comments)
-
-
-## Tests for issue #1 -- new dtypes ##
-
-
-def test_CV_C01():
-    mpr = MPRfile(os.path.join(testdata_dir, 'CV_C01.mpr'))
-    mpt, comments = MPTfile(os.path.join(testdata_dir, 'CV_C01.mpt'))
-    assert_MPR_matches_MPT(mpr, mpt, comments)
-
-
-def test_CA_455nm():
-    mpr = MPRfile(os.path.join(testdata_dir, '121_CA_455nm_6V_30min_C01.mpr'))
-    mpt, comments = MPTfile(os.path.join(testdata_dir, '121_CA_455nm_6V_30min_C01.mpt'))
     assert_MPR_matches_MPT(mpr, mpt, comments)
