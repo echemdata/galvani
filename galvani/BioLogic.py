@@ -70,7 +70,8 @@ def MPTfile(file_or_path):
     if magic != b'EC-Lab ASCII FILE\r\n':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
-    nb_headers_match = re.match(b'Nb header lines : (\d+)\s*$', next(mpt_file))
+    # TODO use rb'string' here once Python 2 is no longer supported
+    nb_headers_match = re.match(b'Nb header lines : (\\d+)\\s*$', next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
         raise ValueError("Too few header lines: %d" % nb_headers)
@@ -107,7 +108,7 @@ def MPTfileCSV(file_or_path):
     if magic.rstrip() != 'EC-Lab ASCII FILE':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
-    nb_headers_match = re.match('Nb header lines : (\d+)\s*$', next(mpt_file))
+    nb_headers_match = re.match(r'Nb header lines : (\d+)\s*$', next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
         raise ValueError("Too few header lines: %d" % nb_headers)
