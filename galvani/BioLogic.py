@@ -70,7 +70,8 @@ def MPTfile(file_or_path):
     if magic != b'EC-Lab ASCII FILE\r\n':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
-    nb_headers_match = re.match(b'Nb header lines : (\d+)\s*$', next(mpt_file))
+    # TODO use rb'string' here once Python 2 is no longer supported
+    nb_headers_match = re.match(b'Nb header lines : (\\d+)\\s*$', next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
         raise ValueError("Too few header lines: %d" % nb_headers)
@@ -107,7 +108,7 @@ def MPTfileCSV(file_or_path):
     if magic.rstrip() != 'EC-Lab ASCII FILE':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
-    nb_headers_match = re.match('Nb header lines : (\d+)\s*$', next(mpt_file))
+    nb_headers_match = re.match(r'Nb header lines : (\d+)\s*$', next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
         raise ValueError("Too few header lines: %d" % nb_headers)
@@ -275,7 +276,7 @@ def read_VMP_modules(fileobj, read_module_data=True):
         if len(hdr_bytes) < VMPmodule_hdr.itemsize:
             raise IOError("Unexpected end of file while reading module header")
 
-        hdr = np.fromstring(hdr_bytes, dtype=VMPmodule_hdr, count=1)
+        hdr = np.frombuffer(hdr_bytes, dtype=VMPmodule_hdr, count=1)
         hdr_dict = dict(((n, hdr[n][0]) for n in VMPmodule_hdr.names))
         hdr_dict['offset'] = fileobj.tell()
         if read_module_data:
@@ -326,17 +327,16 @@ class MPRfile:
         data_module, = (m for m in modules if m['shortname'] == b'VMP data  ')
         maybe_log_module = [m for m in modules if m['shortname'] == b'VMP LOG   ']
 
-        n_data_points = np.fromstring(data_module['data'][:4], dtype='<u4')
-        n_columns = np.fromstring(data_module['data'][4:5], dtype='u1')
-        n_columns = np.asscalar(n_columns)  # Compatibility with recent numpy
+        n_data_points = np.frombuffer(data_module['data'][:4], dtype='<u4')
+        n_columns = np.frombuffer(data_module['data'][4:5], dtype='u1').item()
 
         if data_module['version'] == 0:
-            column_types = np.fromstring(data_module['data'][5:], dtype='u1',
+            column_types = np.frombuffer(data_module['data'][5:], dtype='u1',
                                          count=n_columns)
             remaining_headers = data_module['data'][5 + n_columns:100]
             main_data = data_module['data'][100:]
         elif data_module['version'] == 2:
-            column_types = np.fromstring(data_module['data'][5:], dtype='<u2',
+            column_types = np.frombuffer(data_module['data'][5:], dtype='<u2',
                                          count=n_columns)
             ## There is 405 bytes of data before the main array starts
             remaining_headers = data_module['data'][5 + 2 * n_columns:405]
@@ -351,7 +351,7 @@ class MPRfile:
             assert(not any(remaining_headers))
 
         self.dtype, self.flags_dict, self.flags2_dict = VMPdata_dtype_from_colIDs(column_types)
-        self.data = np.fromstring(main_data, dtype=self.dtype)
+        self.data = np.frombuffer(main_data, dtype=self.dtype)
         assert(self.data.shape[0] == n_data_points)
 
         ## No idea what these 'column types' mean or even if they are actually
@@ -371,13 +371,13 @@ class MPRfile:
             ## There is a timestamp at either 465 or 469 bytes
             ## I can't find any reason why it is one or the other in any
             ## given file
-            ole_timestamp1 = np.fromstring(log_module['data'][465:],
+            ole_timestamp1 = np.frombuffer(log_module['data'][465:],
                                            dtype='<f8', count=1)
-            ole_timestamp2 = np.fromstring(log_module['data'][469:],
+            ole_timestamp2 = np.frombuffer(log_module['data'][469:],
                                            dtype='<f8', count=1)
-            ole_timestamp3 = np.fromstring(log_module['data'][473:],
+            ole_timestamp3 = np.frombuffer(log_module['data'][473:],
                                            dtype='<f8', count=1)
-            ole_timestamp4 = np.fromstring(log_module['data'][585:],
+            ole_timestamp4 = np.frombuffer(log_module['data'][585:],
                                            dtype='<f8', count=1)
 
             if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
