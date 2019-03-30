@@ -52,13 +52,15 @@ def test_open_MPT_csv_fails_for_bad_file():
     ('bio_logic5.mpr', '2013-01-28', '2013-01-28'),
     # bio_logic6.mpr has no end date because it does not have a VMP LOG module
     ('bio_logic6.mpr', '2012-09-11', None),
+    # C019P-0ppb-A_C01.mpr stores the date in a different format
+    ('C019P-0ppb-A_C01.mpr', '2019-03-14', '2019-03-14'),
 ])
 def test_MPR_dates(filename, startdate, enddate):
     """Check that the start and end dates in .mpr files are read correctly."""
     mpr = MPRfile(os.path.join(testdata_dir, filename))
     assert mpr.startdate.strftime('%Y-%m-%d') == startdate
     if enddate:
-        mpr.enddate.strftime('%Y-%m-%d') == enddate
+        assert mpr.enddate.strftime('%Y-%m-%d') == enddate
     else:
         assert not hasattr(mpr, 'enddate')
 
