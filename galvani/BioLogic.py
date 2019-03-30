@@ -360,12 +360,18 @@ class MPRfile:
         self.cols = column_types
         self.npts = n_data_points
 
-        tm = time.strptime(str3(settings_mod['date']), '%m/%d/%y')
+        try:
+            tm = time.strptime(str3(settings_mod['date']), '%m/%d/%y')
+        except ValueError:
+            tm = time.strptime(str3(settings_mod['date']), '%m-%d-%y')
         self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
         if maybe_log_module:
             log_module, = maybe_log_module
-            tm = time.strptime(str3(log_module['date']), '%m/%d/%y')
+            try:
+                tm = time.strptime(str3(log_module['date']), '%m/%d/%y')
+            except ValueError:
+                tm = time.strptime(str3(log_module['date']), '%m-%d-%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
             ## There is a timestamp at either 465 or 469 bytes
