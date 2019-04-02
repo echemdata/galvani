@@ -352,10 +352,14 @@ CREATE VIEW IF NOT EXISTS Capacity_View
 
 def mdb_get_data_text(s3db, filename, table):
     print("Reading %s..." % table)
+    # TODO after dropping Python 2 support - use Popen as contextmanager
+    mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
+                       bufsize=-1, stdin=None, stdout=sp.PIPE,
+                       universal_newlines=True)
     try:
-        mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
-                           bufsize=-1, stdin=None, stdout=sp.PIPE,
-                           universal_newlines=True)
+        # Initialize values to avoid NameError in except clause
+        mdb_output = ''
+        insert_match = None
         mdb_output = mdb_sql.stdout.read()
         while len(mdb_output) > 0:
             insert_match = re.match(r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n',
@@ -365,7 +369,8 @@ def mdb_get_data_text(s3db, filename, table):
         s3db.commit()
     except:
         print("Error while importing %s" % table)
-        print("Remaining mdb-export output:", mdb_output)
+        if mdb_output:
+            print("Remaining mdb-export output:", mdb_output)
         if insert_match:
             print("insert_re match:", insert_match)
         raise
@@ -375,10 +380,11 @@ def mdb_get_data_text(s3db, filename, table):
 
 def mdb_get_data_numeric(s3db, filename, table):
     print("Reading %s..." % table)
+    # TODO after dropping Python 2 support - use Popen as contextmanager
+    mdb_sql = sp.Popen(['mdb-export', filename, table],
+                       bufsize=-1, stdin=None, stdout=sp.PIPE,
+                       universal_newlines=True)
     try:
-        mdb_sql = sp.Popen(['mdb-export', filename, table],
-                           bufsize=-1, stdin=None, stdout=sp.PIPE,
-                           universal_newlines=True)
         mdb_csv = csv.reader(mdb_sql.stdout)
         mdb_headers = next(mdb_csv)
         quoted_headers = ['"%s"' % h for h in mdb_headers]
