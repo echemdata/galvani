@@ -11,10 +11,8 @@ import pytest
 from galvani import MPTfile, MPRfile
 from galvani.BioLogic import MPTfileCSV, str3  # not exported
 
-testdata_dir = os.path.join(os.path.dirname(__file__), 'testdata')
 
-
-def test_open_MPT():
+def test_open_MPT(testdata_dir):
     mpt1, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpt'))
     assert comments == []
     assert mpt1.dtype.names == (
@@ -24,12 +22,12 @@ def test_open_MPT():
     )
 
 
-def test_open_MPT_fails_for_bad_file():
+def test_open_MPT_fails_for_bad_file(testdata_dir):
     with pytest.raises(ValueError, match='Bad first line'):
         MPTfile(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
 
-def test_open_MPT_csv():
+def test_open_MPT_csv(testdata_dir):
     mpt1, comments = MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpt'))
     assert comments == []
     assert mpt1.fieldnames == [
@@ -39,7 +37,7 @@ def test_open_MPT_csv():
     ]
 
 
-def test_open_MPT_csv_fails_for_bad_file():
+def test_open_MPT_csv_fails_for_bad_file(testdata_dir):
     with pytest.raises((ValueError, UnicodeDecodeError)):
         MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpr'))
 
@@ -55,7 +53,7 @@ def test_open_MPT_csv_fails_for_bad_file():
     # C019P-0ppb-A_C01.mpr stores the date in a different format
     ('C019P-0ppb-A_C01.mpr', '2019-03-14', '2019-03-14'),
 ])
-def test_MPR_dates(filename, startdate, enddate):
+def test_MPR_dates(testdata_dir, filename, startdate, enddate):
     """Check that the start and end dates in .mpr files are read correctly."""
     mpr = MPRfile(os.path.join(testdata_dir, filename))
     assert mpr.startdate.strftime('%Y-%m-%d') == startdate
@@ -65,7 +63,7 @@ def test_MPR_dates(filename, startdate, enddate):
         assert not hasattr(mpr, 'enddate')
 
 
-def test_open_MPR_fails_for_bad_file():
+def test_open_MPR_fails_for_bad_file(testdata_dir):
     with pytest.raises(ValueError, match='Invalid magic for .mpr file'):
         MPRfile(os.path.join(testdata_dir, 'arbin1.res'))
 
@@ -134,7 +132,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     'CV_C01',
     '121_CA_455nm_6V_30min_C01',
 ])
-def test_MPR_matches_MPT(basename):
+def test_MPR_matches_MPT(testdata_dir, basename):
     """Check the MPR parser against the MPT parser.
 
     Load a binary .mpr file and a text .mpt file which should contain
@@ -147,7 +145,7 @@ def test_MPR_matches_MPT(basename):
     assert_MPR_matches_MPT(mpr, mpt, comments)
 
 
-def test_MPR5_matches_MPT5():
+def test_MPR5_matches_MPT5(testdata_dir):
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic5.mpr'))
     mpt, comments = MPTfile((re.sub(b'\tXXX\t', b'\t0\t', line) for line in
                              open(os.path.join(testdata_dir, 'bio_logic5.mpt'),
@@ -155,7 +153,7 @@ def test_MPR5_matches_MPT5():
     assert_MPR_matches_MPT(mpr, mpt, comments)
 
 
-def test_MPR6_matches_MPT6():
+def test_MPR6_matches_MPT6(testdata_dir):
     mpr = MPRfile(os.path.join(testdata_dir, 'bio_logic6.mpr'))
     mpt, comments = MPTfile(os.path.join(testdata_dir, 'bio_logic6.mpt'))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
