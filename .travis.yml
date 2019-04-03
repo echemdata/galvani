@@ -3,6 +3,7 @@ language: python
 cache:
   directories:
     - .tox
+    - .pytest_cache
     - tests/testdata
 python:
   - "2.7"
