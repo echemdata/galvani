@@ -3,7 +3,6 @@
 import os
 import sqlite3
 import subprocess
-import sys
 
 import pytest
 
@@ -28,11 +27,7 @@ def test_convert_Arbin_no_mdbtools(testdata_dir, tmpdir):
     """Checks that the conversion fails with an appropriate error message."""
     res_file = os.path.join(testdata_dir, 'arbin1.res')
     sqlite_file = os.path.join(str(tmpdir), 'arbin1.s3db')
-    if sys.version_info >= (3, 3):
-        expected_exception = FileNotFoundError
-    else:
-        expected_exception = OSError
-    with pytest.raises(expected_exception, match="No such file or directory: 'mdb-export'"):
+    with pytest.raises(RuntimeError, match="Could not locate the `mdb-export` executable."):
         res2sqlite.convert_arbin_to_sqlite(res_file, sqlite_file)
 
 

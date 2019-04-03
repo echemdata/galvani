@@ -353,9 +353,16 @@ CREATE VIEW IF NOT EXISTS Capacity_View
 def mdb_get_data_text(s3db, filename, table):
     print("Reading %s..." % table)
     # TODO after dropping Python 2 support - use Popen as contextmanager
-    mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
-                       bufsize=-1, stdin=None, stdout=sp.PIPE,
-                       universal_newlines=True)
+    try:
+        mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
+                           bufsize=-1, stdin=None, stdout=sp.PIPE,
+                           universal_newlines=True)
+    except OSError as e:
+        if e.errno == 2:
+            raise RuntimeError('Could not locate the `mdb-export` executable. '
+                               'Check that mdbtools is properly installed.')
+        else:
+            raise
     try:
         # Initialize values to avoid NameError in except clause
         mdb_output = ''
@@ -381,9 +388,16 @@ def mdb_get_data_text(s3db, filename, table):
 def mdb_get_data_numeric(s3db, filename, table):
     print("Reading %s..." % table)
     # TODO after dropping Python 2 support - use Popen as contextmanager
-    mdb_sql = sp.Popen(['mdb-export', filename, table],
-                       bufsize=-1, stdin=None, stdout=sp.PIPE,
-                       universal_newlines=True)
+    try:
+        mdb_sql = sp.Popen(['mdb-export', filename, table],
+                           bufsize=-1, stdin=None, stdout=sp.PIPE,
+                           universal_newlines=True)
+    except OSError as e:
+        if e.errno == 2:
+            raise RuntimeError('Could not locate the `mdb-export` executable. '
+                               'Check that mdbtools is properly installed.')
+        else:
+            raise
     try:
         mdb_csv = csv.reader(mdb_sql.stdout)
         mdb_headers = next(mdb_csv)
