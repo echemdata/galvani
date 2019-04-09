@@ -144,14 +144,59 @@ VMPmodule_hdr = np.dtype([('shortname', 'S10'),
                           ('version', '<u4'),
                           ('date', 'S8')])
 
+data_dtype_dict = {
+                   4: ('time/s', '<f8'),
+                   5: ('control/V/mA', '<f4'),
+                   6: ('Ewe/V', '<f4'),
+                   7: ('dQ/mA.h', '<f8'),
+                   8: ('I/mA', '<f4'),  # 8 is either I or <I> ??
+                   9: ('Ece/V', '<f4'),
+                   11: ('I/mA', '<f8'),
+                   13: ('(Q-Qo)/mA.h', '<f8'),
+                   19: ('control/V', '<f4'),
+                   20: ('control/mA', '<f4'),
+                   23: ('dQ/mA.h', '<f8'),  # Same as 7?
+                   24: ('cycle number', '<f8'),
+                   32: ('freq/Hz', '<f4'),
+                   33: ('|Ewe|/V', '<f4'),
+                   34: ('|I|/A', '<f4'),
+                   35: ('Phase(Z)/deg', '<f4'),
+                   36: ('|Z|/Ohm', '<f4'),
+                   37: ('Re(Z)/Ohm', '<f4'),
+                   38: ('-Im(Z)/Ohm', '<f4'),
+                   39: ('I Range', '<u2'),
+                   70: ('P/W', '<f4'),
+                   76: ('<I>/mA', '<f4'),
+                   77: ('<Ewe>/V', '<f4'),
+                   123: ('Energy charge/W.h', '<f8'),
+                   124: ('Energy discharge/W.h', '<f8'),
+                   125: ('Capacitance charge/µF', '<f8'),
+                   126: ('Capacitance discharge/µF', '<f8'),
+                   131: ('Ns', '<u2'),
+                   169: ('Cs/µF', '<f4'),
+                   172: ('Cp/µF', '<f4'),
+                   434: ('(Q-Qo)/C', '<f4'),
+                   435: ('dQ/C', '<f4'),
+                   467: ('Q charge/discharge/mA.h', '<f8'),
+                   468: ('half cycle', '<u4'),
+                   473: ('THD Ewe/%', '<f4'),
+                   474: ('THD I/%', '<f4'),
+                   476: ('NSD Ewe/%', '<f4'),
+                   477: ('NSD I/%', '<f4'),
+                   479: ('NSR Ewe/%', '<f4'),
+                   480: ('NSR I/%', '<f4'),
+                  }
+
 
 def VMPdata_dtype_from_colIDs(colIDs):
-    dtype_dict = OrderedDict()
+    type_list = []
+    field_list = []
     flags_dict = OrderedDict()
     flags2_dict = OrderedDict()
     for colID in colIDs:
         if colID in (1, 2, 3, 21, 31, 65):
-            dtype_dict['flags'] = 'u1'
+            type_list.append('u1')
+            field_list.append('flags')
             if colID == 1:
                 flags_dict['mode'] = (np.uint8(0x03), np.uint8)
             elif colID == 2:
@@ -166,97 +211,18 @@ def VMPdata_dtype_from_colIDs(colIDs):
                 flags_dict['counter inc.'] = (np.uint8(0x80), np.bool_)
             else:
                 raise NotImplementedError("flag %d not implemented" % colID)
-        elif colID == 4:
-            dtype_dict['time/s'] = '<f8'
-        elif colID == 5:
-            dtype_dict['control/V/mA'] = '<f4'
-        # 6 is Ewe, 77 is <Ewe>, I don't see the difference
-        elif colID in (6, 77):
-            dtype_dict['Ewe/V'] = '<f4'
-        # Can't see any difference between 7 and 23
-        elif colID in (7, 23):
-            dtype_dict['dQ/mA.h'] = '<f8'
-        # 76 is <I>, 8 is either I or <I> ??
-        elif colID in (8, 76):
-            dtype_dict['I/mA'] = '<f4'
-        elif colID == 9:
-            dtype_dict['Ece/V'] = '<f4'
-        elif colID == 11:
-            dtype_dict['I/mA'] = '<f8'
-        elif colID == 13:
-            dtype_dict['(Q-Qo)/mA.h'] = '<f8'
-        elif colID == 16:
-            dtype_dict['Analog IN 1/V'] = '<f4'
-        elif colID == 19:
-            dtype_dict['control/V'] = '<f4'
-        elif colID == 20:
-            dtype_dict['control/mA'] = '<f4'
-        elif colID == 24:
-            dtype_dict['cycle number'] = '<f8'
-        elif colID == 32:
-            dtype_dict['freq/Hz'] = '<f4'
-        elif colID == 33:
-            dtype_dict['|Ewe|/V'] = '<f4'
-        elif colID == 34:
-            dtype_dict['|I|/A'] = '<f4'
-        elif colID == 35:
-            dtype_dict['Phase(Z)/deg'] = '<f4'
-        elif colID == 36:
-            dtype_dict['|Z|/Ohm'] = '<f4'
-        elif colID == 37:
-            dtype_dict['Re(Z)/Ohm'] = '<f4'
-        elif colID == 38:
-            dtype_dict['-Im(Z)/Ohm'] = '<f4'
-        elif colID == 39:
-            dtype_dict['I Range'] = '<u2'
-        elif colID == 70:
-            dtype_dict['P/W'] = '<f4'
-        elif colID == 74:
-            dtype_dict['Energy/W.h'] = '<f8'
-        elif colID == 78:
-            dtype_dict['Cs-2/µf-2'] = '<f4'
-        elif colID == 123:
-            dtype_dict['Energy charge/W.h'] = '<f8'
-        elif colID == 124:
-            dtype_dict['Energy discharge/W.h'] = '<f8'
-        elif colID == 125:
-            dtype_dict['Capacitance charge/µF'] = '<f8'
-        elif colID == 126:
-            dtype_dict['Capacitance discharge/µF'] = '<f8'
-        elif colID == 131:
-            dtype_dict['Ns'] = '<u2'
-        elif colID == 169:
-            dtype_dict['Cs/µF'] = '<f4'
-        elif colID == 172:
-            dtype_dict['Cp/µF'] = '<f4'
-        elif colID == 173:
-            dtype_dict['Cp-2/µF-2'] = '<f4'
-        elif colID == 434:
-            dtype_dict['(Q-Qo)/C'] = '<f4'
-        elif colID == 435:
-            dtype_dict['dQ/C'] = '<f4'
-        elif colID == 467:
-            dtype_dict['Q charge/discharge/mA.h'] = '<f8'
-        elif colID == 468:
-            dtype_dict['half cycle'] = '<u4'
-        elif colID == 469:
-            dtype_dict['z cycle'] = '<u4'
-        elif colID == 473:
-            dtype_dict['THD Ewe/%'] = '<f4'
-        elif colID == 476:
-            dtype_dict['NSD Ewe/%'] = '<f4'
-        elif colID == 479:
-            dtype_dict['NSR Ewe/%'] = '<f4'
-        elif colID == 474:
-            dtype_dict['THD I/%'] = '<f4'
-        elif colID == 477:
-            dtype_dict['NSD I/%'] = '<f4'
-        elif colID == 480:
-            dtype_dict['NSR I/%'] = '<f4'
         else:
-            print(dtype_dict)
-            raise NotImplementedError("column type %d not implemented" % colID)
-    return np.dtype(list(dtype_dict.items())), flags_dict, flags2_dict
+            try:
+                field = data_dtype_dict[colID][0]
+                if field in field_list:
+                    field += str(len(field_list))
+                field_list.append(field)
+                type_list.append(data_dtype_dict[colID][1])
+            except KeyError:
+                print(list(zip(field_list, type_list)))
+                raise NotImplementedError("column type %d not implemented"
+                                          % colID)
+    return np.dtype(list(zip(field_list, type_list))), flags_dict, flags2_dict
 
 
 def read_VMP_modules(fileobj, read_module_data=True):
