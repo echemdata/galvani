@@ -325,6 +325,7 @@ class MPRfile:
         self.modules = modules
         settings_mod, = (m for m in modules if m['shortname'] == b'VMP Set   ')
         data_module, = (m for m in modules if m['shortname'] == b'VMP data  ')
+        maybe_loop_module = [m for m in modules if m['shortname'] == b'VMP loop  ']
         maybe_log_module = [m for m in modules if m['shortname'] == b'VMP LOG   ']
 
         n_data_points = np.frombuffer(data_module['data'][:4], dtype='<u4')
@@ -365,6 +366,15 @@ class MPRfile:
         except ValueError:
             tm = time.strptime(str3(settings_mod['date']), '%m-%d-%y')
         self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+
+        if maybe_loop_module:
+            loop_module, = maybe_loop_module
+            if loop_module['version'] == 0:
+                self.loop_index = np.fromstring(loop_module['data'][4:],
+                                                dtype='<u4')
+            else:
+                raise ValueError("Unrecognised version for data module: %d" %
+                                 data_module['version'])
 
         if maybe_log_module:
             log_module, = maybe_log_module
