@@ -195,8 +195,9 @@ def VMPdata_dtype_from_colIDs(colIDs):
     flags2_dict = OrderedDict()
     for colID in colIDs:
         if colID in (1, 2, 3, 21, 31, 65):
-            type_list.append('u1')
-            field_list.append('flags')
+            if 'flags' not in field_list:
+                type_list.append('u1')
+                field_list.append('flags')
             if colID == 1:
                 flags_dict['mode'] = (np.uint8(0x03), np.uint8)
             elif colID == 2:
