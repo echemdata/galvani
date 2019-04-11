@@ -311,6 +311,7 @@ class MPRfile:
     """
 
     def __init__(self, file_or_path):
+        self.loop_index = None
         if isinstance(file_or_path, str):
             mpr_file = open(file_or_path, 'rb')
         else:
@@ -372,6 +373,7 @@ class MPRfile:
             if loop_module['version'] == 0:
                 self.loop_index = np.fromstring(loop_module['data'][4:],
                                                 dtype='<u4')
+                self.loop_index = np.trim_zeros(self.loop_index, 'b')
             else:
                 raise ValueError("Unrecognised version for data module: %d" %
                                  data_module['version'])
