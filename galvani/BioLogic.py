@@ -71,19 +71,20 @@ def MPTfile(file_or_path):
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
     # TODO use rb'string' here once Python 2 is no longer supported
-    nb_headers_match = re.match(b'Nb header lines : (\\d+)\\s*$', next(mpt_file))
+    nb_headers_match = re.match(b'Nb header lines : (\\d+)\\s*$',
+                                next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
         raise ValueError("Too few header lines: %d" % nb_headers)
 
-    ## The 'magic number' line, the 'Nb headers' line and the column headers
-    ## make three lines. Every additional line is a comment line.
+    # The 'magic number' line, the 'Nb headers' line and the column headers
+    # make three lines. Every additional line is a comment line.
     comments = [next(mpt_file) for i in range(nb_headers - 3)]
 
     fieldnames = str3(next(mpt_file)).strip().split('\t')
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
-    ## Must be able to parse files where commas are used for decimal points
+    # Must be able to parse files where commas are used for decimal points
     converter_dict = dict(((i, comma_converter)
                            for i in range(len(fieldnames))))
     mpt_array = np.loadtxt(mpt_file, dtype=record_type,
@@ -113,8 +114,8 @@ def MPTfileCSV(file_or_path):
     if nb_headers < 3:
         raise ValueError("Too few header lines: %d" % nb_headers)
 
-    ## The 'magic number' line, the 'Nb headers' line and the column headers
-    ## make three lines. Every additional line is a comment line.
+    # The 'magic number' line, the 'Nb headers' line and the column headers
+    # make three lines. Every additional line is a comment line.
     comments = [next(mpt_file) for i in range(nb_headers - 3)]
 
     mpt_csv = csv.DictReader(mpt_file, dialect='excel-tab')
@@ -270,7 +271,8 @@ def read_VMP_modules(fileobj, read_module_data=True):
         if len(module_magic) == 0:  # end of file
             break
         elif module_magic != b'MODULE':
-            raise ValueError("Found %r, expecting start of new VMP MODULE" % module_magic)
+            raise ValueError("Found %r, expecting start of new VMP MODULE"
+                             % module_magic)
 
         hdr_bytes = fileobj.read(VMPmodule_hdr.itemsize)
         if len(hdr_bytes) < VMPmodule_hdr.itemsize:
@@ -292,6 +294,9 @@ def read_VMP_modules(fileobj, read_module_data=True):
         else:
             yield hdr_dict
             fileobj.seek(hdr_dict['offset'] + hdr_dict['length'], SEEK_SET)
+
+
+MPR_MAGIC = b'BIO-LOGIC MODULAR FILE\x1a'.ljust(48) + b'\x00\x00\x00\x00'
 
 
 class MPRfile:
@@ -316,10 +321,8 @@ class MPRfile:
             mpr_file = open(file_or_path, 'rb')
         else:
             mpr_file = file_or_path
-
-        mpr_magic = b'BIO-LOGIC MODULAR FILE\x1a                         \x00\x00\x00\x00'
-        magic = mpr_file.read(len(mpr_magic))
-        if magic != mpr_magic:
+        magic = mpr_file.read(len(MPR_MAGIC))
+        if magic != MPR_MAGIC:
             raise ValueError('Invalid magic for .mpr file: %s' % magic)
 
         modules = list(read_VMP_modules(mpr_file))
@@ -340,7 +343,7 @@ class MPRfile:
         elif data_module['version'] == 2:
             column_types = np.frombuffer(data_module['data'][5:], dtype='<u2',
                                          count=n_columns)
-            ## There is 405 bytes of data before the main array starts
+            # There is 405 bytes of data before the main array starts
             remaining_headers = data_module['data'][5 + 2 * n_columns:405]
             main_data = data_module['data'][405:]
         else:
@@ -356,8 +359,8 @@ class MPRfile:
         self.data = np.frombuffer(main_data, dtype=self.dtype)
         assert(self.data.shape[0] == n_data_points)
 
-        ## No idea what these 'column types' mean or even if they are actually
-        ## column types at all
+        # No idea what these 'column types' mean or even if they are actually
+        # column types at all
         self.version = int(data_module['version'])
         self.cols = column_types
         self.npts = n_data_points
@@ -386,9 +389,9 @@ class MPRfile:
                 tm = time.strptime(str3(log_module['date']), '%m-%d-%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
-            ## There is a timestamp at either 465 or 469 bytes
-            ## I can't find any reason why it is one or the other in any
-            ## given file
+            # There is a timestamp at either 465 or 469 bytes
+            # I can't find any reason why it is one or the other in any
+            # given file
             ole_timestamp1 = np.frombuffer(log_module['data'][465:],
                                            dtype='<f8', count=1)
             ole_timestamp2 = np.frombuffer(log_module['data'][469:],
@@ -406,7 +409,7 @@ class MPRfile:
                 ole_timestamp = ole_timestamp3
             elif ole_timestamp4 > 40000 and ole_timestamp4 < 50000:
                 ole_timestamp = ole_timestamp4
-    
+
             else:
                 raise ValueError("Could not find timestamp in the LOG module")
 
@@ -414,10 +417,10 @@ class MPRfile:
             ole_timedelta = timedelta(days=ole_timestamp[0])
             self.timestamp = ole_base + ole_timedelta
             if self.startdate != self.timestamp.date():
-                raise ValueError("""Date mismatch:
-                Start date: %s
-                End date: %s
-                Timestamp: %s""" % (self.startdate, self.enddate, self.timestamp))
+                raise ValueError("Date mismatch:\n"
+                                 + "    Start date: %s\n" % self.startdate
+                                 + "    End date: %s\n" % self.enddate
+                                 + "    Timestamp: %s\n" % self.timestamp)
 
     def get_flag(self, flagname):
         if flagname in self.flags_dict:
