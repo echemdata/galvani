@@ -216,7 +216,6 @@ def VMPdata_dtype_from_colIDs(colIDs):
     type_list = []
     field_name_counts = defaultdict(int)
     flags_dict = OrderedDict()
-    flags2_dict = OrderedDict()
     for colID in colIDs:
         if colID in VMPdata_colID_flag_map:
             # Some column IDs represent boolean flags or small integers
@@ -228,6 +227,9 @@ def VMPdata_dtype_from_colIDs(colIDs):
                 type_list.append(('flags', 'u1'))
                 field_name_counts['flags'] = 1
             flag_name, flag_mask, flag_type = VMPdata_colID_flag_map[colID]
+            # TODO what happens if a flag colID has already been seen
+            # i.e. if flag_name is already present in flags_dict?
+            # Does it create a second 'flags' byte in the record?
             flags_dict[flag_name] = (np.uint8(flag_mask), flag_type)
         elif colID in VMPdata_colID_dtype_map:
             field_name, field_type = VMPdata_colID_dtype_map[colID]
@@ -240,7 +242,7 @@ def VMPdata_dtype_from_colIDs(colIDs):
             type_list.append((unique_field_name, field_type))
         else:
             raise NotImplementedError("column type %d not implemented" % colID)
-    return np.dtype(type_list), flags_dict, flags2_dict
+    return np.dtype(type_list), flags_dict
 
 
 def read_VMP_modules(fileobj, read_module_data=True):
@@ -336,7 +338,7 @@ class MPRfile:
         else:
             assert(not any(remaining_headers))
 
-        self.dtype, self.flags_dict, self.flags2_dict = VMPdata_dtype_from_colIDs(column_types)
+        self.dtype, self.flags_dict = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.frombuffer(main_data, dtype=self.dtype)
         assert(self.data.shape[0] == n_data_points)
 
@@ -407,8 +409,5 @@ class MPRfile:
         if flagname in self.flags_dict:
             mask, dtype = self.flags_dict[flagname]
             return np.array(self.data['flags'] & mask, dtype=dtype)
-        elif flagname in self.flags2_dict:
-            mask, dtype = self.flags2_dict[flagname]
-            return np.array(self.data['flags2'] & mask, dtype=dtype)
         else:
             raise AttributeError("Flag '%s' not present" % flagname)
