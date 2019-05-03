@@ -188,6 +188,17 @@ VMPdata_colID_dtype_map = {
     480: ('NSR I/%', '<f4'),
 }
 
+# These column IDs define flags which are all stored packed in a single byte
+# The values in the map are (name, bitmask, dtype)
+VMPdata_colID_flag_map = {
+    1: ('mode', 0x03, np.uint8),
+    2: ('ox/red', 0x04, np.bool_),
+    3: ('error', 0x08, np.bool_),
+    21: ('control changes', 0x10, np.bool_),
+    31: ('Ns changes', 0x20, np.bool_),
+    65: ('counter inc.', 0x80, np.bool_),
+}
+
 
 def VMPdata_dtype_from_colIDs(colIDs):
     type_list = []
@@ -195,24 +206,12 @@ def VMPdata_dtype_from_colIDs(colIDs):
     flags_dict = OrderedDict()
     flags2_dict = OrderedDict()
     for colID in colIDs:
-        if colID in (1, 2, 3, 21, 31, 65):
+        if colID in VMPdata_colID_flag_map:
             if 'flags' not in field_list:
                 type_list.append('u1')
                 field_list.append('flags')
-            if colID == 1:
-                flags_dict['mode'] = (np.uint8(0x03), np.uint8)
-            elif colID == 2:
-                flags_dict['ox/red'] = (np.uint8(0x04), np.bool_)
-            elif colID == 3:
-                flags_dict['error'] = (np.uint8(0x08), np.bool_)
-            elif colID == 21:
-                flags_dict['control changes'] = (np.uint8(0x10), np.bool_)
-            elif colID == 31:
-                flags_dict['Ns changes'] = (np.uint8(0x20), np.bool_)
-            elif colID == 65:
-                flags_dict['counter inc.'] = (np.uint8(0x80), np.bool_)
-            else:
-                raise NotImplementedError("flag %d not implemented" % colID)
+            flag_name, flag_mask, flag_type = VMPdata_colID_flag_map[colID]
+            flags_dict[flag_name] = (np.uint8(flag_mask), flag_type)
         else:
             try:
                 field = VMPdata_colID_dtype_map[colID][0]
