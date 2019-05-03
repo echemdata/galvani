@@ -144,48 +144,49 @@ VMPmodule_hdr = np.dtype([('shortname', 'S10'),
                           ('version', '<u4'),
                           ('date', 'S8')])
 
-data_dtype_dict = {
-                   4: ('time/s', '<f8'),
-                   5: ('control/V/mA', '<f4'),
-                   6: ('Ewe/V', '<f4'),
-                   7: ('dQ/mA.h', '<f8'),
-                   8: ('I/mA', '<f4'),  # 8 is either I or <I> ??
-                   9: ('Ece/V', '<f4'),
-                   11: ('I/mA', '<f8'),
-                   13: ('(Q-Qo)/mA.h', '<f8'),
-                   19: ('control/V', '<f4'),
-                   20: ('control/mA', '<f4'),
-                   23: ('dQ/mA.h', '<f8'),  # Same as 7?
-                   24: ('cycle number', '<f8'),
-                   32: ('freq/Hz', '<f4'),
-                   33: ('|Ewe|/V', '<f4'),
-                   34: ('|I|/A', '<f4'),
-                   35: ('Phase(Z)/deg', '<f4'),
-                   36: ('|Z|/Ohm', '<f4'),
-                   37: ('Re(Z)/Ohm', '<f4'),
-                   38: ('-Im(Z)/Ohm', '<f4'),
-                   39: ('I Range', '<u2'),
-                   70: ('P/W', '<f4'),
-                   76: ('<I>/mA', '<f4'),
-                   77: ('<Ewe>/V', '<f4'),
-                   123: ('Energy charge/W.h', '<f8'),
-                   124: ('Energy discharge/W.h', '<f8'),
-                   125: ('Capacitance charge/µF', '<f8'),
-                   126: ('Capacitance discharge/µF', '<f8'),
-                   131: ('Ns', '<u2'),
-                   169: ('Cs/µF', '<f4'),
-                   172: ('Cp/µF', '<f4'),
-                   434: ('(Q-Qo)/C', '<f4'),
-                   435: ('dQ/C', '<f4'),
-                   467: ('Q charge/discharge/mA.h', '<f8'),
-                   468: ('half cycle', '<u4'),
-                   473: ('THD Ewe/%', '<f4'),
-                   474: ('THD I/%', '<f4'),
-                   476: ('NSD Ewe/%', '<f4'),
-                   477: ('NSD I/%', '<f4'),
-                   479: ('NSR Ewe/%', '<f4'),
-                   480: ('NSR I/%', '<f4'),
-                  }
+# Maps from colID to a tuple defining a numpy dtype
+VMPdata_colID_dtype_map = {
+    4: ('time/s', '<f8'),
+    5: ('control/V/mA', '<f4'),
+    6: ('Ewe/V', '<f4'),
+    7: ('dQ/mA.h', '<f8'),
+    8: ('I/mA', '<f4'),  # 8 is either I or <I> ??
+    9: ('Ece/V', '<f4'),
+    11: ('I/mA', '<f8'),
+    13: ('(Q-Qo)/mA.h', '<f8'),
+    19: ('control/V', '<f4'),
+    20: ('control/mA', '<f4'),
+    23: ('dQ/mA.h', '<f8'),  # Same as 7?
+    24: ('cycle number', '<f8'),
+    32: ('freq/Hz', '<f4'),
+    33: ('|Ewe|/V', '<f4'),
+    34: ('|I|/A', '<f4'),
+    35: ('Phase(Z)/deg', '<f4'),
+    36: ('|Z|/Ohm', '<f4'),
+    37: ('Re(Z)/Ohm', '<f4'),
+    38: ('-Im(Z)/Ohm', '<f4'),
+    39: ('I Range', '<u2'),
+    70: ('P/W', '<f4'),
+    76: ('<I>/mA', '<f4'),
+    77: ('<Ewe>/V', '<f4'),
+    123: ('Energy charge/W.h', '<f8'),
+    124: ('Energy discharge/W.h', '<f8'),
+    125: ('Capacitance charge/µF', '<f8'),
+    126: ('Capacitance discharge/µF', '<f8'),
+    131: ('Ns', '<u2'),
+    169: ('Cs/µF', '<f4'),
+    172: ('Cp/µF', '<f4'),
+    434: ('(Q-Qo)/C', '<f4'),
+    435: ('dQ/C', '<f4'),
+    467: ('Q charge/discharge/mA.h', '<f8'),
+    468: ('half cycle', '<u4'),
+    473: ('THD Ewe/%', '<f4'),
+    474: ('THD I/%', '<f4'),
+    476: ('NSD Ewe/%', '<f4'),
+    477: ('NSD I/%', '<f4'),
+    479: ('NSR Ewe/%', '<f4'),
+    480: ('NSR I/%', '<f4'),
+}
 
 
 def VMPdata_dtype_from_colIDs(colIDs):
@@ -214,11 +215,11 @@ def VMPdata_dtype_from_colIDs(colIDs):
                 raise NotImplementedError("flag %d not implemented" % colID)
         else:
             try:
-                field = data_dtype_dict[colID][0]
+                field = VMPdata_colID_dtype_map[colID][0]
                 if field in field_list:
                     field += str(len(field_list))
                 field_list.append(field)
-                type_list.append(data_dtype_dict[colID][1])
+                type_list.append(VMPdata_colID_dtype_map[colID][1])
             except KeyError:
                 print(list(zip(field_list, type_list)))
                 raise NotImplementedError("column type %d not implemented"
