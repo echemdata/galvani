@@ -8,7 +8,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 import pytest
 
-from galvani import MPTfile, MPRfile
+from galvani import BioLogic, MPTfile, MPRfile
 from galvani.BioLogic import MPTfileCSV, str3  # not exported
 
 
@@ -40,6 +40,37 @@ def test_open_MPT_csv(testdata_dir):
 def test_open_MPT_csv_fails_for_bad_file(testdata_dir):
     with pytest.raises((ValueError, UnicodeDecodeError)):
         MPTfileCSV(os.path.join(testdata_dir, 'bio_logic1.mpr'))
+
+
+def test_colID_map_uniqueness():
+    """Check some uniqueness properties of the VMPdata_colID_xyz maps."""
+    field_colIDs = set(BioLogic.VMPdata_colID_dtype_map.keys())
+    flag_colIDs = set(BioLogic.VMPdata_colID_flag_map.keys())
+    field_names = [v[0] for v in BioLogic.VMPdata_colID_dtype_map.values()]
+    flag_names = [v[0] for v in BioLogic.VMPdata_colID_flag_map.values()]
+    assert not field_colIDs.intersection(flag_colIDs)
+    # 'I/mA' and 'dQ/mA.h' are duplicated
+    # assert len(set(field_names)) == len(field_names)
+    assert len(set(flag_names)) == len(flag_names)
+    assert not set(field_names).intersection(flag_names)
+
+
+@pytest.mark.parametrize('colIDs, expected', [
+    ([1, 2, 3], [('flags', 'u1')]),
+    ([4, 6], [('time/s', '<f8'), ('Ewe/V', '<f4')]),
+    ([1, 4, 21], [('flags', 'u1'), ('time/s', '<f8')]),
+    ([4, 6, 4], [('time/s', '<f8'), ('Ewe/V', '<f4'), ('time/s 2', '<f8')]),
+    ([4, 9999], NotImplementedError),
+])
+def test_colID_to_dtype(colIDs, expected):
+    """Test converting column ID to numpy dtype."""
+    if isinstance(expected, type) and issubclass(expected, Exception):
+        with pytest.raises(expected):
+            BioLogic.VMPdata_dtype_from_colIDs(colIDs)
+        return
+    expected_dtype = np.dtype(expected)
+    dtype, flags_dict = BioLogic.VMPdata_dtype_from_colIDs(colIDs)
+    assert dtype == expected_dtype
 
 
 @pytest.mark.parametrize('filename, startdate, enddate', [
