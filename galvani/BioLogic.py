@@ -10,6 +10,7 @@ from os import SEEK_SET
 import time
 from datetime import date, datetime, timedelta
 from collections import defaultdict, OrderedDict
+import functools
 
 import numpy as np
 
@@ -18,7 +19,7 @@ if sys.version_info.major <= 2:
     str3 = str
     from string import maketrans
 else:
-    str3 = lambda b: str(b, encoding='ascii')
+    str3 = functools.partial(str, encoding='ascii')
     maketrans = bytes.maketrans
 
 
