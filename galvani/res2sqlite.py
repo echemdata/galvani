@@ -225,7 +225,7 @@ CREATE TABLE Smart_Battery_Data_Table
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
-    ## The following tables are not present in version 1.14
+    # The following tables are not present in version 1.14
     'MCell_Aci_Data_Table': """
 CREATE TABLE MCell_Aci_Data_Table
  (
