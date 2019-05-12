@@ -377,7 +377,7 @@ def mdb_get_data_text(s3db, filename, table):
             s3db.execute(insert_match.group())
             mdb_output = mdb_output[insert_match.end():]
         s3db.commit()
-    except:
+    except BaseException:
         print("Error while importing %s" % table)
         print("Remaining mdb-export output:", mdb_output)
         if insert_match:
@@ -398,8 +398,11 @@ def mdb_get_data_numeric(s3db, filename, table):
         quoted_headers = ['"%s"' % h for h in mdb_headers]
         joined_headers = ', '.join(quoted_headers)
         joined_placemarks = ', '.join(['?' for h in mdb_headers])
-        insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(table,
-                                        joined_headers, joined_placemarks)
+        insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(
+            table,
+            joined_headers,
+            joined_placemarks,
+        )
         s3db.executemany(insert_stmt, mdb_csv)
         s3db.commit()
     finally:
