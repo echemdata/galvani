@@ -353,10 +353,14 @@ DROP TABLE capacity_helper;
 CREATE VIEW IF NOT EXISTS Capacity_View
     AS SELECT Test_ID, Data_Point, Test_Time, Step_Time, DateTime,
               Step_Index, Cycle_Index, Current, Voltage, "dV/dt",
-              Discharge_Capacity + Discharge_Capacity_Sum - Charge_Capacity - Charge_Capacity_Sum AS Net_Capacity,
-              Discharge_Capacity + Discharge_Capacity_Sum + Charge_Capacity + Charge_Capacity_Sum AS Gross_Capacity,
-              Discharge_Energy + Discharge_Energy_Sum - Charge_Energy - Charge_Energy_Sum AS Net_Energy,
-              Discharge_Energy + Discharge_Energy_Sum + Charge_Energy + Charge_Energy_Sum AS Gross_Energy
+              ( (Discharge_Capacity + Discharge_Capacity_Sum)
+              - (Charge_Capacity + Charge_Capacity_Sum) ) AS Net_Capacity,
+              ( (Discharge_Capacity + Discharge_Capacity_Sum)
+              + (Charge_Capacity + Charge_Capacity_Sum) ) AS Gross_Capacity,
+              ( (Discharge_Energy + Discharge_Energy_Sum)
+              - (Charge_Energy + Charge_Energy_Sum) ) AS Net_Energy,
+              ( (Discharge_Energy + Discharge_Energy_Sum)
+              + (Charge_Energy + Charge_Energy_Sum) ) AS Gross_Energy
         FROM Channel_Normal_Table NATURAL JOIN Capacity_Sum_Table;
 """
 
@@ -452,7 +456,9 @@ def convert_arbin_to_sqlite(input_file, output_file):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Convert Arbin .res files to sqlite3 databases using mdb-export")
+    parser = argparse.ArgumentParser(
+        description="Convert Arbin .res files to sqlite3 databases using mdb-export",
+    )
     parser.add_argument('input_file', type=str)  # need file name to pass to sp.Popen
     parser.add_argument('output_file', type=str)  # need file name to pass to sqlite3.connect
 
