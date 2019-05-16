@@ -1,1 +1,3 @@
-from .BioLogic import MPTfile, MPRfile
+from .BioLogic import MPRfile, MPTfile
+
+__all__ = ['MPRfile', 'MPTfile']
