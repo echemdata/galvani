@@ -7,8 +7,8 @@ import csv
 import argparse
 
 
-## The following scripts are adapted from the result of running
-## $ mdb-schema <result.res> oracle
+# The following scripts are adapted from the result of running
+# $ mdb-schema <result.res> oracle
 
 mdb_tables = ["Version_Table", "Global_Table", "Resume_Table",
               "Channel_Normal_Table", "Channel_Statistic_Table",
@@ -126,7 +126,8 @@ CREATE TABLE Channel_Statistic_Table
   -- Version 1.14 ends here, version 5.23 continues
     Charge_Time             REAL DEFAULT NULL,
     Discharge_Time          REAL DEFAULT NULL,
-    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
     "Auxiliary_Table": """
 CREATE TABLE Auxiliary_Table
@@ -137,7 +138,8 @@ CREATE TABLE Auxiliary_Table
     Data_Type               INTEGER,
     X                       REAL,
     "dX/dt"                 REAL,
-    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
     "Event_Table": """
 CREATE TABLE Event_Table
@@ -220,9 +222,10 @@ CREATE TABLE Smart_Battery_Data_Table
     ChargingCurrent         REAL DEFAULT NULL,
     ChargingVoltage         REAL DEFAULT NULL,
     ManufacturerData        REAL DEFAULT NULL,
-    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
-    ## The following tables are not present in version 1.14
+    # The following tables are not present in version 1.14
     'MCell_Aci_Data_Table': """
 CREATE TABLE MCell_Aci_Data_Table
  (
@@ -233,7 +236,8 @@ CREATE TABLE MCell_Aci_Data_Table
     Phase_Shift		REAL,
     Voltage			REAL,
     Current			REAL,
-    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 );""",
     'Aux_Global_Data_Table': """
 CREATE TABLE Aux_Global_Data_Table
@@ -288,7 +292,8 @@ CREATE TABLE Smart_Battery_Clock_Stretch_Table
     VCELL3			    INTEGER,
     VCELL2			    INTEGER,
     VCELL1			    INTEGER,
-    FOREIGN KEY (Test_ID, Data_Point) REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 );"""}
 
 mdb_create_indices = {
@@ -306,18 +311,21 @@ CREATE TEMPORARY TABLE capacity_helper(
     Discharge_Capacity     REAL NOT NULL,
     Charge_Energy          REAL NOT NULL,
     Discharge_Energy       REAL NOT NULL,
-    FOREIGN KEY (Test_ID, Cycle_Index) REFERENCES Channel_Normal_Table (Test_ID, Cycle_Index)
+    FOREIGN KEY (Test_ID, Cycle_Index)
+        REFERENCES Channel_Normal_Table (Test_ID, Cycle_Index)
 );
 
-INSERT INTO capacity_helper 
-    SELECT Test_ID, Cycle_Index, max(Charge_Capacity), max(Discharge_Capacity), max(Charge_Energy), max(Discharge_Energy) 
-        FROM Channel_Normal_Table 
+INSERT INTO capacity_helper
+    SELECT Test_ID, Cycle_Index,
+           max(Charge_Capacity), max(Discharge_Capacity),
+           max(Charge_Energy), max(Discharge_Energy)
+        FROM Channel_Normal_Table
         GROUP BY Test_ID, Cycle_Index;
 
--- ## Alternative way of selecting ##        
--- select * 
---     from Channel_Normal_Table as a join Channel_Normal_Table as b 
---         on (a.Test_ID = b.Test_ID and a.Data_Point = b.Data_Point + 1 
+-- ## Alternative way of selecting ##
+-- select *
+--     from Channel_Normal_Table as a join Channel_Normal_Table as b
+--         on (a.Test_ID = b.Test_ID and a.Data_Point = b.Data_Point + 1
 --              and a.Charge_Capacity < b.Charge_Capacity);
 
 DROP TABLE IF EXISTS Capacity_Sum_Table;
@@ -328,12 +336,15 @@ CREATE TABLE Capacity_Sum_Table(
     Discharge_Capacity_Sum REAL NOT NULL,
     Charge_Energy_Sum      REAL NOT NULL,
     Discharge_Energy_Sum   REAL NOT NULL,
-    FOREIGN KEY (Test_ID, Cycle_Index) REFERENCES Channel_Normal_Table (Test_ID, Cycle_Index)
+    FOREIGN KEY (Test_ID, Cycle_Index)
+        REFERENCES Channel_Normal_Table (Test_ID, Cycle_Index)
 );
 
-INSERT INTO Capacity_Sum_Table 
-    SELECT a.Test_ID, a.Cycle_Index, total(b.Charge_Capacity), total(b.Discharge_Capacity), total(b.Charge_Energy), total(b.Discharge_Energy) 
-        FROM capacity_helper AS a LEFT JOIN capacity_helper AS b 
+INSERT INTO Capacity_Sum_Table
+    SELECT a.Test_ID, a.Cycle_Index,
+           total(b.Charge_Capacity), total(b.Discharge_Capacity),
+           total(b.Charge_Energy), total(b.Discharge_Energy)
+        FROM capacity_helper AS a LEFT JOIN capacity_helper AS b
             ON (a.Test_ID = b.Test_ID AND a.Cycle_Index > b.Cycle_Index)
         GROUP BY a.Test_ID, a.Cycle_Index;
 
@@ -342,16 +353,24 @@ DROP TABLE capacity_helper;
 CREATE VIEW IF NOT EXISTS Capacity_View
     AS SELECT Test_ID, Data_Point, Test_Time, Step_Time, DateTime,
               Step_Index, Cycle_Index, Current, Voltage, "dV/dt",
-              Discharge_Capacity + Discharge_Capacity_Sum - Charge_Capacity - Charge_Capacity_Sum AS Net_Capacity,
-              Discharge_Capacity + Discharge_Capacity_Sum + Charge_Capacity + Charge_Capacity_Sum AS Gross_Capacity,
-              Discharge_Energy + Discharge_Energy_Sum - Charge_Energy - Charge_Energy_Sum AS Net_Energy,
-              Discharge_Energy + Discharge_Energy_Sum + Charge_Energy + Charge_Energy_Sum AS Gross_Energy
+              ( (Discharge_Capacity + Discharge_Capacity_Sum)
+              - (Charge_Capacity + Charge_Capacity_Sum) ) AS Net_Capacity,
+              ( (Discharge_Capacity + Discharge_Capacity_Sum)
+              + (Charge_Capacity + Charge_Capacity_Sum) ) AS Gross_Capacity,
+              ( (Discharge_Energy + Discharge_Energy_Sum)
+              - (Charge_Energy + Charge_Energy_Sum) ) AS Net_Energy,
+              ( (Discharge_Energy + Discharge_Energy_Sum)
+              + (Charge_Energy + Charge_Energy_Sum) ) AS Gross_Energy
         FROM Channel_Normal_Table NATURAL JOIN Capacity_Sum_Table;
 """
 
 
 def mdb_get_data_text(s3db, filename, table):
     print("Reading %s..." % table)
+    insert_pattern = re.compile(
+        r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n',
+        re.IGNORECASE
+    )
     # TODO after dropping Python 2 support - use Popen as contextmanager
     try:
         mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
@@ -369,12 +388,11 @@ def mdb_get_data_text(s3db, filename, table):
         insert_match = None
         mdb_output = mdb_sql.stdout.read()
         while len(mdb_output) > 0:
-            insert_match = re.match(r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n',
-                                    mdb_output, re.IGNORECASE)
+            insert_match = insert_pattern.match(mdb_output)
             s3db.execute(insert_match.group())
             mdb_output = mdb_output[insert_match.end():]
         s3db.commit()
-    except:
+    except BaseException:
         print("Error while importing %s" % table)
         if mdb_output:
             print("Remaining mdb-export output:", mdb_output)
@@ -404,8 +422,11 @@ def mdb_get_data_numeric(s3db, filename, table):
         quoted_headers = ['"%s"' % h for h in mdb_headers]
         joined_headers = ', '.join(quoted_headers)
         joined_placemarks = ', '.join(['?' for h in mdb_headers])
-        insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(table,
-                                        joined_headers, joined_placemarks)
+        insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(
+            table,
+            joined_headers,
+            joined_placemarks,
+        )
         s3db.executemany(insert_stmt, mdb_csv)
         s3db.commit()
     finally:
@@ -427,34 +448,37 @@ def convert_arbin_to_sqlite(input_file, output_file):
     Any data currently in the sqlite file will be erased!
     """
     s3db = sqlite3.connect(output_file)
-    
-    
+
     for table in reversed(mdb_tables + mdb_5_23_tables):
         s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
-    
+
     for table in mdb_tables:
         s3db.executescript(mdb_create_scripts[table])
         mdb_get_data(s3db, input_file, table)
         if table in mdb_create_indices:
             print("Creating indices for %s..." % table)
             s3db.executescript(mdb_create_indices[table])
-    
-    if (s3db.execute("SELECT Version_Schema_Field FROM Version_Table;").fetchone()[0] == "Results File 5.23"):
+
+    csr = s3db.execute("SELECT Version_Schema_Field FROM Version_Table;")
+    version_text, = csr.fetchone()
+    if (version_text == "Results File 5.23"):
         for table in mdb_5_23_tables:
             s3db.executescript(mdb_create_scripts[table])
             mdb_get_data(input_file, table)
             if table in mdb_create_indices:
                 s3db.executescript(mdb_create_indices[table])
-    
+
     print("Creating helper table for capacity and energy totals...")
     s3db.executescript(helper_table_script)
-    
+
     print("Vacuuming database...")
     s3db.executescript("VACUUM; ANALYZE;")
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Convert Arbin .res files to sqlite3 databases using mdb-export")
+    parser = argparse.ArgumentParser(
+        description="Convert Arbin .res files to sqlite3 databases using mdb-export",
+    )
     parser.add_argument('input_file', type=str)  # need file name to pass to sp.Popen
     parser.add_argument('output_file', type=str)  # need file name to pass to sqlite3.connect
 

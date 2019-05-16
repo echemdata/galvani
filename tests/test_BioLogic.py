@@ -127,7 +127,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     assert_array_equal(mpr.get_flag("control changes"), mpt["control changes"])
     if "Ns changes" in mpt.dtype.fields:
         assert_array_equal(mpr.get_flag("Ns changes"), mpt["Ns changes"])
-    ## Nothing uses the 0x40 bit of the flags    
+    # Nothing uses the 0x40 bit of the flags
     assert_array_equal(mpr.get_flag("counter inc."), mpt["counter inc."])
 
     assert_array_almost_equal(mpr.data["time/s"],
@@ -144,10 +144,10 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     assert_field_matches("dQ/mA.h", decimal=17)  # 64 bit float precision
     assert_field_matches("P/W", decimal=10)  # 32 bit float precision for 1.xxE-5
     assert_field_matches("I/mA", decimal=6)  # 32 bit float precision
-    
+
     assert_field_exact("cycle number")
     assert_field_matches("(Q-Qo)/C", decimal=6)  # 32 bit float precision
-    
+
     try:
         assert timestamp_from_comments(comments) == mpr.timestamp
     except AttributeError:
