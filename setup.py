@@ -9,11 +9,11 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
 
 setup(
     name='galvani',
-    version='0.0.2',
+    version='0.1.0',
     description='Open and process battery charger log data files',
     long_description=readme,
     long_description_content_type="text/markdown",
-    url='https://github.com/chatcannon/galvani',
+    url='https://github.com/echemdata/galvani',
     author='Chris Kerr',
     author_email='chris.kerr@mykolab.ch',
     license='GPLv3+',
@@ -25,9 +25,11 @@ setup(
         'Natural Language :: English',
     ],
     packages=['galvani'],
-    entry_points={'console_scripts': [
+    entry_points={
+        'console_scripts': [
             'res2sqlite = galvani.res2sqlite:main',
-    ]},
+        ],
+    },
     install_requires=['numpy'],
     tests_require=['pytest'],
 )
