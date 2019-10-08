@@ -180,6 +180,7 @@ VMPdata_colID_dtype_map = {
     172: ('Cp/µF', '<f4'),
     434: ('(Q-Qo)/C', '<f4'),
     435: ('dQ/C', '<f4'),
+    441: ('<Ecv>/V', '<f4'),
     467: ('Q charge/discharge/mA.h', '<f8'),
     468: ('half cycle', '<u4'),
     473: ('THD Ewe/%', '<f4'),
@@ -327,12 +328,16 @@ class MPRfile:
                                          count=n_columns)
             remaining_headers = data_module['data'][5 + n_columns:100]
             main_data = data_module['data'][100:]
-        elif data_module['version'] == 2:
+        elif data_module['version'] in [2, 3]:
             column_types = np.frombuffer(data_module['data'][5:], dtype='<u2',
                                          count=n_columns)
-            # There is 405 bytes of data before the main array starts
+            # There are bytes of data before the main array starts
+            if data_module['version'] == 3:
+                num_bytes_before = 406  # version 3 added `\x01` to the start
+            else:
+                num_bytes_before = 405
             remaining_headers = data_module['data'][5 + 2 * n_columns:405]
-            main_data = data_module['data'][405:]
+            main_data = data_module['data'][num_bytes_before:]
         else:
             raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
