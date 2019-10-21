@@ -166,6 +166,7 @@ VMPdata_colID_dtype_map = {
     125: ('Capacitance charge/µF', '<f8'),
     126: ('Capacitance discharge/µF', '<f8'),
     131: ('Ns', '<u2'),
+    168: ('Rcmp/Ohm', '<f4'),
     169: ('Cs/µF', '<f4'),
     172: ('Cp/µF', '<f4'),
     434: ('(Q-Qo)/C', '<f4'),
@@ -236,6 +237,9 @@ def VMPdata_dtype_from_colIDs(colIDs):
                 unique_field_name = field_name
             type_list.append((unique_field_name, field_type))
         else:
+            print('ColIDs: ',
+                  [colID for colID in colIDs if colID not in VMPdata_colID_flag_map])
+            print('Types: ', type_list[1:])
             raise NotImplementedError("column type %d not implemented" % colID)
     return np.dtype(type_list), flags_dict
 
