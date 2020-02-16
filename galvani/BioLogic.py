@@ -10,15 +10,8 @@ from os import SEEK_SET
 import time
 from datetime import date, datetime, timedelta
 from collections import defaultdict, OrderedDict
-import functools
 
 import numpy as np
-
-
-if sys.version_info.major <= 2:
-    str3 = str
-else:
-    str3 = functools.partial(str, encoding='ascii')
 
 
 def fieldname_to_dtype(fieldname):
@@ -53,7 +46,7 @@ def comma_converter(float_text):
     return float(float_text.translate(trans_table))
 
 
-def MPTfile(file_or_path):
+def MPTfile(file_or_path, encoding='ascii'):
     """Opens .mpt files as numpy record arrays
 
     Checks for the correct headings, skips any comments and returns a
@@ -80,7 +73,7 @@ def MPTfile(file_or_path):
     # make three lines. Every additional line is a comment line.
     comments = [next(mpt_file) for i in range(nb_headers - 3)]
 
-    fieldnames = str3(next(mpt_file)).strip().split('\t')
+    fieldnames = next(mpt_file).decode(encoding).strip().split('\t')
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
     # Must be able to parse files where commas are used for decimal points
@@ -356,9 +349,9 @@ class MPRfile:
         self.npts = n_data_points
 
         try:
-            tm = time.strptime(str3(settings_mod['date']), '%m/%d/%y')
+            tm = time.strptime(settings_mod['date'].decode('ascii'), '%m/%d/%y')
         except ValueError:
-            tm = time.strptime(str3(settings_mod['date']), '%m-%d-%y')
+            tm = time.strptime(settings_mod['date'].decode('ascii'), '%m-%d-%y')
         self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
         if maybe_loop_module:
@@ -374,9 +367,9 @@ class MPRfile:
         if maybe_log_module:
             log_module, = maybe_log_module
             try:
-                tm = time.strptime(str3(log_module['date']), '%m/%d/%y')
+                tm = time.strptime(log_module['date'].decode('ascii'), '%m/%d/%y')
             except ValueError:
-                tm = time.strptime(str3(log_module['date']), '%m-%d-%y')
+                tm = time.strptime(log_module['date'].decode('ascii'), '%m-%d-%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
             # There is a timestamp at either 465 or 469 bytes
