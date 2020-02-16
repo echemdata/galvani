@@ -371,27 +371,28 @@ def mdb_get_data_text(s3db, filename, table):
         r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n',
         re.IGNORECASE
     )
-    # TODO after dropping Python 2 support - use Popen as contextmanager
     try:
-        mdb_sql = sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
-                           bufsize=-1, stdin=None, stdout=sp.PIPE,
-                           universal_newlines=True)
+        # Initialize values to avoid NameError in except clause
+        mdb_output = ''
+        insert_match = None
+        with sp.Popen(['mdb-export', '-I', 'postgres', filename, table],
+                      bufsize=-1, stdin=sp.DEVNULL, stdout=sp.PIPE,
+                      universal_newlines=True) as mdb_sql:
+
+            mdb_output = mdb_sql.stdout.read()
+            while len(mdb_output) > 0:
+                insert_match = insert_pattern.match(mdb_output)
+                s3db.execute(insert_match.group())
+                mdb_output = mdb_output[insert_match.end():]
+                mdb_output += mdb_sql.stdout.read()
+            s3db.commit()
+
     except OSError as e:
         if e.errno == 2:
             raise RuntimeError('Could not locate the `mdb-export` executable. '
                                'Check that mdbtools is properly installed.')
         else:
             raise
-    try:
-        # Initialize values to avoid NameError in except clause
-        mdb_output = ''
-        insert_match = None
-        mdb_output = mdb_sql.stdout.read()
-        while len(mdb_output) > 0:
-            insert_match = insert_pattern.match(mdb_output)
-            s3db.execute(insert_match.group())
-            mdb_output = mdb_output[insert_match.end():]
-        s3db.commit()
     except BaseException:
         print("Error while importing %s" % table)
         if mdb_output:
@@ -399,38 +400,32 @@ def mdb_get_data_text(s3db, filename, table):
         if insert_match:
             print("insert_re match:", insert_match)
         raise
-    finally:
-        mdb_sql.terminate()
 
 
 def mdb_get_data_numeric(s3db, filename, table):
     print("Reading %s..." % table)
-    # TODO after dropping Python 2 support - use Popen as contextmanager
     try:
-        mdb_sql = sp.Popen(['mdb-export', filename, table],
-                           bufsize=-1, stdin=None, stdout=sp.PIPE,
-                           universal_newlines=True)
+        with sp.Popen(['mdb-export', filename, table],
+                      bufsize=-1, stdin=sp.DEVNULL, stdout=sp.PIPE,
+                      universal_newlines=True) as mdb_sql:
+            mdb_csv = csv.reader(mdb_sql.stdout)
+            mdb_headers = next(mdb_csv)
+            quoted_headers = ['"%s"' % h for h in mdb_headers]
+            joined_headers = ', '.join(quoted_headers)
+            joined_placemarks = ', '.join(['?' for h in mdb_headers])
+            insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(
+                table,
+                joined_headers,
+                joined_placemarks,
+            )
+            s3db.executemany(insert_stmt, mdb_csv)
+            s3db.commit()
     except OSError as e:
         if e.errno == 2:
             raise RuntimeError('Could not locate the `mdb-export` executable. '
                                'Check that mdbtools is properly installed.')
         else:
             raise
-    try:
-        mdb_csv = csv.reader(mdb_sql.stdout)
-        mdb_headers = next(mdb_csv)
-        quoted_headers = ['"%s"' % h for h in mdb_headers]
-        joined_headers = ', '.join(quoted_headers)
-        joined_placemarks = ', '.join(['?' for h in mdb_headers])
-        insert_stmt = 'INSERT INTO "{0}" ({1}) VALUES ({2});'.format(
-            table,
-            joined_headers,
-            joined_placemarks,
-        )
-        s3db.executemany(insert_stmt, mdb_csv)
-        s3db.commit()
-    finally:
-        mdb_sql.terminate()
 
 
 def mdb_get_data(s3db, filename, table):
