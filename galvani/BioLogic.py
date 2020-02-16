@@ -3,7 +3,6 @@
 
 __all__ = ['MPTfileCSV', 'MPTfile']
 
-import sys
 import re
 import csv
 from os import SEEK_SET
@@ -62,8 +61,7 @@ def MPTfile(file_or_path, encoding='ascii'):
     if magic != b'EC-Lab ASCII FILE\r\n':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
-    # TODO use rb'string' here once Python 2 is no longer supported
-    nb_headers_match = re.match(b'Nb header lines : (\\d+)\\s*$',
+    nb_headers_match = re.match(rb'Nb header lines : (\d+)\s*$',
                                 next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
@@ -333,10 +331,7 @@ class MPRfile:
             raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
 
-        if sys.version_info.major <= 2:
-            assert(all((b == '\x00' for b in remaining_headers)))
-        else:
-            assert(not any(remaining_headers))
+        assert(not any(remaining_headers))
 
         self.dtype, self.flags_dict = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.frombuffer(main_data, dtype=self.dtype)
