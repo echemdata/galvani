@@ -23,6 +23,8 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English',
+        'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Scientific/Engineering :: Chemistry',
     ],
     packages=['galvani'],
     entry_points={
@@ -30,6 +32,7 @@ setup(
             'res2sqlite = galvani.res2sqlite:main',
         ],
     },
+    python_requires='>=3.5',
     install_requires=['numpy'],
     tests_require=['pytest'],
 )
