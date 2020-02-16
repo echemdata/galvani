@@ -6,7 +6,6 @@ cache:
     - .pytest_cache
     - tests/testdata
 python:
-  - "2.7"
   - "3.5"
 #  - "3.7"  # Python 3.7 is not available on travis CI yet
 install:
