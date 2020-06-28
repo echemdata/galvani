@@ -176,6 +176,8 @@ VMPdata_colID_dtype_map = {
     125: ('Capacitance charge/µF', '<f8'),
     126: ('Capacitance discharge/µF', '<f8'),
     131: ('Ns', '<u2'),
+    74: ('Energy/W.h', '<f8'),
+    462: ('Temperature/°C', '<f4'),
     169: ('Cs/µF', '<f4'),
     172: ('Cp/µF', '<f4'),
     434: ('(Q-Qo)/C', '<f4'),
