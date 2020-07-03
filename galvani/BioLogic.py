@@ -185,6 +185,7 @@ VMPdata_colID_dtype_map = {
     462: ('Temperature/°C', '<f4'),
     467: ('Q charge/discharge/mA.h', '<f8'),
     468: ('half cycle', '<u4'),
+    469: ('z cycle', '<u4'),
     473: ('THD Ewe/%', '<f4'),
     474: ('THD I/%', '<f4'),
     476: ('NSD Ewe/%', '<f4'),
