@@ -3,24 +3,14 @@
 
 __all__ = ['MPTfileCSV', 'MPTfile']
 
-import sys
 import re
 import csv
 from os import SEEK_SET
 import time
 from datetime import date, datetime, timedelta
 from collections import defaultdict, OrderedDict
-import functools
 
 import numpy as np
-
-
-if sys.version_info.major <= 2:
-    str3 = str
-    from string import maketrans
-else:
-    str3 = functools.partial(str, encoding='ascii')
-    maketrans = bytes.maketrans
 
 
 def fieldname_to_dtype(fieldname):
@@ -49,13 +39,13 @@ def fieldname_to_dtype(fieldname):
         raise ValueError("Invalid column header: %s" % fieldname)
 
 
-def comma_converter(float_string):
-    """Convert numbers to floats whether the decimal point is '.' or ','"""
-    trans_table = maketrans(b',', b'.')
-    return float(float_string.translate(trans_table))
+def comma_converter(float_text):
+    """Convert text to float whether the decimal point is '.' or ','"""
+    trans_table = bytes.maketrans(b',', b'.')
+    return float(float_text.translate(trans_table))
 
 
-def MPTfile(file_or_path):
+def MPTfile(file_or_path, encoding='ascii'):
     """Opens .mpt files as numpy record arrays
 
     Checks for the correct headings, skips any comments and returns a
@@ -71,8 +61,7 @@ def MPTfile(file_or_path):
     if magic != b'EC-Lab ASCII FILE\r\n':
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
-    # TODO use rb'string' here once Python 2 is no longer supported
-    nb_headers_match = re.match(b'Nb header lines : (\\d+)\\s*$',
+    nb_headers_match = re.match(rb'Nb header lines : (\d+)\s*$',
                                 next(mpt_file))
     nb_headers = int(nb_headers_match.group(1))
     if nb_headers < 3:
@@ -82,7 +71,7 @@ def MPTfile(file_or_path):
     # make three lines. Every additional line is a comment line.
     comments = [next(mpt_file) for i in range(nb_headers - 3)]
 
-    fieldnames = str3(next(mpt_file)).strip().split('\t')
+    fieldnames = next(mpt_file).decode(encoding).strip().split('\t')
     record_type = np.dtype(list(map(fieldname_to_dtype, fieldnames)))
 
     # Must be able to parse files where commas are used for decimal points
@@ -345,10 +334,7 @@ class MPRfile:
             raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
 
-        if sys.version_info.major <= 2:
-            assert(all((b == '\x00' for b in remaining_headers)))
-        else:
-            assert(not any(remaining_headers))
+        assert(not any(remaining_headers))
 
         self.dtype, self.flags_dict = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.frombuffer(main_data, dtype=self.dtype)
@@ -361,9 +347,9 @@ class MPRfile:
         self.npts = n_data_points
 
         try:
-            tm = time.strptime(str3(settings_mod['date']), '%m/%d/%y')
+            tm = time.strptime(settings_mod['date'].decode('ascii'), '%m/%d/%y')
         except ValueError:
-            tm = time.strptime(str3(settings_mod['date']), '%m-%d-%y')
+            tm = time.strptime(settings_mod['date'].decode('ascii'), '%m-%d-%y')
         self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
         if maybe_loop_module:
@@ -379,9 +365,9 @@ class MPRfile:
         if maybe_log_module:
             log_module, = maybe_log_module
             try:
-                tm = time.strptime(str3(log_module['date']), '%m/%d/%y')
+                tm = time.strptime(log_module['date'].decode('ascii'), '%m/%d/%y')
             except ValueError:
-                tm = time.strptime(str3(log_module['date']), '%m-%d-%y')
+                tm = time.strptime(log_module['date'].decode('ascii'), '%m-%d-%y')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
             # There is a timestamp at either 465 or 469 bytes

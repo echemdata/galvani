@@ -6,9 +6,10 @@ cache:
     - .pytest_cache
     - tests/testdata
 python:
-  - "2.7"
   - "3.5"
-#  - "3.7"  # Python 3.7 is not available on travis CI yet
+  - "3.6"
+  - "3.7"
+  - "3.8"
 install:
   - pip install tox-travis
   - sh get_testdata.sh

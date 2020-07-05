@@ -9,8 +9,8 @@ import pytest
 from galvani import res2sqlite
 
 
-# TODO - change to subprocess.DEVNULL when python 2 support is removed
-have_mdbtools = (subprocess.call(['which', 'mdb-export'], stdout=None) == 0)
+have_mdbtools = (subprocess.call(['which', 'mdb-export'],
+                                 stdout=subprocess.DEVNULL) == 0)
 
 
 def test_res2sqlite_help():

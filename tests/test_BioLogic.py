@@ -9,7 +9,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 import pytest
 
 from galvani import BioLogic, MPTfile, MPRfile
-from galvani.BioLogic import MPTfileCSV, str3  # not exported
+from galvani.BioLogic import MPTfileCSV  # not exported
 
 
 def test_open_MPT(testdata_dir):
@@ -103,7 +103,7 @@ def timestamp_from_comments(comments):
     for line in comments:
         time_match = re.match(b'Acquisition started on : ([0-9/]+ [0-9:]+)', line)
         if time_match:
-            timestamp = datetime.strptime(str3(time_match.group(1)),
+            timestamp = datetime.strptime(time_match.group(1).decode('ascii'),
                                           '%m/%d/%Y %H:%M:%S')
             return timestamp
     raise AttributeError("No timestamp in comments")
