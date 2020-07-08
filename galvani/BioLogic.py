@@ -238,7 +238,9 @@ def VMPdata_dtype_from_colIDs(colIDs):
             type_list.append((unique_field_name, field_type))
         else:
             raise NotImplementedError("Column ID {cid} after column {prev} "
-                    "is unknown".format(cid=colID, prev=type_list[-1][0]))
+                                      "is unknown"
+                                      .format(cid=colID,
+                                              prev=type_list[-1][0]))
     return np.dtype(type_list), flags_dict
 
 
