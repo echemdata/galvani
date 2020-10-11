@@ -450,11 +450,51 @@ def mdb_get_data(s3db, filename, table):
         raise ValueError("'%s' is in neither mdb_tables_text nor mdb_tables_numeric" % table)
 
 
+def mdb_get_version(filename):
+    """Get the version number from an Arbin .res file.
+
+    Reads the Version_Table and parses the version from Version_Schema_Field.
+    """
+    print("Reading version number...")
+    try:
+        with sp.Popen(['mdb-export', filename, 'Version_Table'],
+                      bufsize=-1, stdin=sp.DEVNULL, stdout=sp.PIPE,
+                      universal_newlines=True) as mdb_sql:
+            mdb_csv = csv.reader(mdb_sql.stdout)
+            mdb_headers = next(mdb_csv)
+            mdb_values = next(mdb_csv)
+            try:
+                next(mdb_csv)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError('Version_Table of %s lists multiple versions' % filename)
+    except OSError as e:
+        if e.errno == 2:
+            raise RuntimeError('Could not locate the `mdb-export` executable. '
+                               'Check that mdbtools is properly installed.')
+        else:
+            raise
+    if 'Version_Schema_Field' not in mdb_headers:
+        raise ValueError('Version_Table of %s does not contain a Version_Schema_Field column'
+                         % filename)
+    version_fields = dict(zip(mdb_headers, mdb_values))
+    version_text = version_fields['Version_Schema_Field']
+    version_match = re.fullmatch('Results File ([.0-9]+)', version_text)
+    if not version_match:
+        raise ValueError('File version "%s" did not match expected format' % version_text)
+    version_string = version_match.group(1)
+    version_tuple = tuple(map(int, version_string.split('.')))
+    return version_tuple
+
+
 def convert_arbin_to_sqlite(input_file, output_file):
     """Read data from an Arbin .res data file and write to a sqlite file.
 
     Any data currently in the sqlite file will be erased!
     """
+    arbin_version = mdb_get_version(input_file)
+
     s3db = sqlite3.connect(output_file)
 
     for table in reversed(mdb_tables + mdb_5_23_tables):
@@ -467,12 +507,10 @@ def convert_arbin_to_sqlite(input_file, output_file):
             print("Creating indices for %s..." % table)
             s3db.executescript(mdb_create_indices[table])
 
-    csr = s3db.execute("SELECT Version_Schema_Field FROM Version_Table;")
-    version_text, = csr.fetchone()
-    if (version_text == "Results File 5.23"):
+    if arbin_version >= (5, 23):
         for table in mdb_5_23_tables:
             s3db.executescript(mdb_create_scripts[table])
-            mdb_get_data(input_file, table)
+            mdb_get_data(s3db, input_file, table)
             if table in mdb_create_indices:
                 s3db.executescript(mdb_create_indices[table])
 
