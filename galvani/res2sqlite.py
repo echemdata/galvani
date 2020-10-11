@@ -56,8 +56,17 @@ CREATE TABLE Global_Table
     Log_Aux_Data_Flag               INTEGER,
     Log_Event_Data_Flag             INTEGER,
     Log_Smart_Battery_Data_Flag     INTEGER,
+  -- The following items are in 5.26 but not in 5.23
+    Log_Can_BMS_Data_Flag           INTEGER DEFAULT NULL,
+    Software_Version                TEXT DEFAULT NULL,
+    Serial_Number                   TEXT DEFAULT NULL,
+    Schedule_Version                TEXT DEFAULT NULL,
+    MASS                            REAL DEFAULT NULL,
+    Specific_Capacity               REAL DEFAULT NULL,
+    Capacity                        REAL DEFAULT NULL,
+  -- Item_ID exists in all versions
     Item_ID                         TEXT,
-  -- Version 1.14 ends here, version 5.23 continues
+  -- These items are in 5.26 and 5.23 but not in 1.14
     Mapped_Aux_Conc_CNumber         INTEGER DEFAULT NULL,
     Mapped_Aux_DI_CNumber           INTEGER DEFAULT NULL,
     Mapped_Aux_DO_CNumber           INTEGER DEFAULT NULL
@@ -222,6 +231,10 @@ CREATE TABLE Smart_Battery_Data_Table
     ChargingCurrent         REAL DEFAULT NULL,
     ChargingVoltage         REAL DEFAULT NULL,
     ManufacturerData        REAL DEFAULT NULL,
+  -- Version 5.23 ends here, version 5.26 continues
+    BATMAN_Status           INTEGER DEFAULT NULL, 
+    DTM_PDM_Status          INTEGER DEFAULT NULL, 
+
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
