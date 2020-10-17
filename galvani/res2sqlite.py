@@ -10,21 +10,39 @@ import argparse
 # The following scripts are adapted from the result of running
 # $ mdb-schema <result.res> oracle
 
-mdb_tables = ["Version_Table", "Global_Table", "Resume_Table",
-              "Channel_Normal_Table", "Channel_Statistic_Table",
-              "Auxiliary_Table", "Event_Table",
-              "Smart_Battery_Info_Table", "Smart_Battery_Data_Table"]
+mdb_tables = [
+    'Version_Table',
+    'Global_Table',
+    'Resume_Table',
+    'Channel_Normal_Table',
+    'Channel_Statistic_Table',
+    'Auxiliary_Table',
+    'Event_Table',
+    'Smart_Battery_Info_Table',
+    'Smart_Battery_Data_Table',
+]
+mdb_5_23_tables = [
+    'MCell_Aci_Data_Table',
+    'Aux_Global_Data_Table',
+    'Smart_Battery_Clock_Stretch_Table',
+]
 
-mdb_tables_text = ["Version_Table", "Global_Table", "Event_Table",
-                   "Smart_Battery_Info_Table"]
-mdb_tables_numeric = ["Resume_Table", "Channel_Normal_Table",
-                      "Channel_Statistic_Table", "Auxiliary_Table",
-                      "Smart_Battery_Data_Table", 'MCell_Aci_Data_Table',
-                      'Aux_Global_Data_Table',
-                      'Smart_Battery_Clock_Stretch_Table']
-
-mdb_5_23_tables = ['MCell_Aci_Data_Table', 'Aux_Global_Data_Table',
-                   'Smart_Battery_Clock_Stretch_Table']
+mdb_tables_text = {
+    'Version_Table',
+    'Global_Table',
+    'Event_Table',
+    'Smart_Battery_Info_Table',
+}
+mdb_tables_numeric = {
+    'Resume_Table',
+    'Channel_Normal_Table',
+    'Channel_Statistic_Table',
+    'Auxiliary_Table',
+    'Smart_Battery_Data_Table',
+    'MCell_Aci_Data_Table',
+    'Aux_Global_Data_Table',
+    'Smart_Battery_Clock_Stretch_Table',
+}
 
 mdb_create_scripts = {
     "Version_Table": """
