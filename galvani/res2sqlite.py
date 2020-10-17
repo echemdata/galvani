@@ -99,7 +99,7 @@ CREATE TABLE Global_Table
     "Resume_Table": """
 CREATE TABLE Resume_Table
  (
-    Test_ID         INTEGER REFERENCES Global_Table(Test_ID),
+    Test_ID         INTEGER PRIMARY KEY REFERENCES Global_Table(Test_ID),
     Step_Index      INTEGER,
     Cycle_Index     INTEGER,
     Channel_Status  INTEGER,
@@ -149,7 +149,8 @@ CREATE TABLE Channel_Normal_Table
     "dV/dt"                 REAL,
     Internal_Resistance     REAL,
     AC_Impedance            REAL,
-    ACI_Phase_Angle         REAL
+    ACI_Phase_Angle         REAL,
+    PRIMARY KEY (Test_ID, Data_Point)
 ); """,
     "Channel_Statistic_Table": """
 CREATE TABLE Channel_Statistic_Table
@@ -160,6 +161,7 @@ CREATE TABLE Channel_Statistic_Table
   -- Version 1.14 ends here, version 5.23 continues
     Charge_Time             REAL DEFAULT NULL,
     Discharge_Time          REAL DEFAULT NULL,
+    PRIMARY KEY (Test_ID, Data_Point),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
@@ -172,6 +174,7 @@ CREATE TABLE Auxiliary_Table
     Data_Type               INTEGER,
     X                       REAL,
     "dX/dt"                 REAL,
+    PRIMARY KEY (Test_ID, Data_Point, Auxiliary_Index),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
@@ -187,7 +190,7 @@ CREATE TABLE Event_Table
     "Smart_Battery_Info_Table":  """
 CREATE TABLE Smart_Battery_Info_Table
  (
-    Test_ID                 INTEGER REFERENCES Global_Table(Test_ID),
+    Test_ID                 INTEGER PRIMARY KEY REFERENCES Global_Table(Test_ID),
     ManufacturerDate        REAL,
     ManufacturerAccess      TEXT,
     SpecificationInfo       TEXT,
@@ -257,9 +260,9 @@ CREATE TABLE Smart_Battery_Data_Table
     ChargingVoltage         REAL DEFAULT NULL,
     ManufacturerData        REAL DEFAULT NULL,
   -- Version 5.23 ends here, version 5.26 continues
-    BATMAN_Status           INTEGER DEFAULT NULL, 
-    DTM_PDM_Status          INTEGER DEFAULT NULL, 
-
+    BATMAN_Status           INTEGER DEFAULT NULL,
+    DTM_PDM_Status          INTEGER DEFAULT NULL,
+    PRIMARY KEY (Test_ID, Data_Point),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
@@ -274,6 +277,7 @@ CREATE TABLE MCell_Aci_Data_Table
     Phase_Shift		REAL,
     Voltage			REAL,
     Current			REAL,
+    PRIMARY KEY (Test_ID, Data_Point, Cell_Index),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 );""",
@@ -284,7 +288,8 @@ CREATE TABLE Aux_Global_Data_Table
     Auxiliary_Index	INTEGER,
     Data_Type		INTEGER,
     Nickname		TEXT,
-    Unit			TEXT
+    Unit			TEXT,
+    PRIMARY KEY (Channel_Index, Auxiliary_Index, Data_Type)
 );""",
     'Smart_Battery_Clock_Stretch_Table': """
 CREATE TABLE Smart_Battery_Clock_Stretch_Table
@@ -330,6 +335,7 @@ CREATE TABLE Smart_Battery_Clock_Stretch_Table
     VCELL3			    INTEGER,
     VCELL2			    INTEGER,
     VCELL1			    INTEGER,
+    PRIMARY KEY (Test_ID, Data_Point),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 );""",
