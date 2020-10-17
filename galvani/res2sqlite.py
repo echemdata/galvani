@@ -5,6 +5,7 @@ import sqlite3
 import re
 import csv
 import argparse
+from copy import copy
 
 
 # The following scripts are adapted from the result of running
@@ -515,22 +516,19 @@ def convert_arbin_to_sqlite(input_file, output_file):
 
     s3db = sqlite3.connect(output_file)
 
-    for table in reversed(mdb_tables + mdb_5_23_tables):
+    tables_to_convert = copy(mdb_tables)
+    if arbin_version >= (5, 23):
+        tables_to_convert.extend(mdb_5_23_tables)
+
+    for table in reversed(tables_to_convert):
         s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
 
-    for table in mdb_tables:
+    for table in tables_to_convert:
         s3db.executescript(mdb_create_scripts[table])
         mdb_get_data(s3db, input_file, table)
         if table in mdb_create_indices:
             print("Creating indices for %s..." % table)
             s3db.executescript(mdb_create_indices[table])
-
-    if arbin_version >= (5, 23):
-        for table in mdb_5_23_tables:
-            s3db.executescript(mdb_create_scripts[table])
-            mdb_get_data(s3db, input_file, table)
-            if table in mdb_create_indices:
-                s3db.executescript(mdb_create_indices[table])
 
     print("Creating helper table for capacity and energy totals...")
     s3db.executescript(helper_table_script)
