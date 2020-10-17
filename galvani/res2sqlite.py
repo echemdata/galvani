@@ -27,12 +27,17 @@ mdb_5_23_tables = [
     'Aux_Global_Data_Table',
     'Smart_Battery_Clock_Stretch_Table',
 ]
+mdb_5_26_tables = [
+    'Can_BMS_Info_Table',
+    'Can_BMS_Data_Table',
+]
 
 mdb_tables_text = {
     'Version_Table',
     'Global_Table',
     'Event_Table',
     'Smart_Battery_Info_Table',
+    'Can_BMS_Info_Table',
 }
 mdb_tables_numeric = {
     'Resume_Table',
@@ -43,6 +48,7 @@ mdb_tables_numeric = {
     'MCell_Aci_Data_Table',
     'Aux_Global_Data_Table',
     'Smart_Battery_Clock_Stretch_Table',
+    'Can_BMS_Data_Table',
 }
 
 mdb_create_scripts = {
@@ -257,7 +263,7 @@ CREATE TABLE Smart_Battery_Data_Table
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
-    # The following tables are not present in version 1.14
+    # The following tables are not present in version 1.14, but are in 5.23
     'MCell_Aci_Data_Table': """
 CREATE TABLE MCell_Aci_Data_Table
  (
@@ -326,7 +332,29 @@ CREATE TABLE Smart_Battery_Clock_Stretch_Table
     VCELL1			    INTEGER,
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
-);"""}
+);""",
+    # The following tables are not present in version 5.23, but are in 5.26
+    'Can_BMS_Info_Table': """
+CREATE TABLE "Can_BMS_Info_Table"
+ (
+    Channel_Index        INTEGER PRIMARY KEY,
+    CAN_Cfg_File_Name    TEXT,
+    CAN_Configuration    TEXT
+);
+""",
+    'Can_BMS_Data_Table': """
+CREATE TABLE "Can_BMS_Data_Table"
+ (
+    Test_ID              INTEGER,
+    Data_Point           INTEGER,
+    CAN_MV_Index         INTEGER,
+    Signal_Value_X       REAL,
+    PRIMARY KEY (Test_ID, Data_Point, CAN_MV_Index),
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+);
+""",
+}
 
 mdb_create_indices = {
     "Channel_Normal_Table": """
@@ -519,6 +547,8 @@ def convert_arbin_to_sqlite(input_file, output_file):
     tables_to_convert = copy(mdb_tables)
     if arbin_version >= (5, 23):
         tables_to_convert.extend(mdb_5_23_tables)
+    if arbin_version >= (5, 26):
+        tables_to_convert.extend(mdb_5_26_tables)
 
     for table in reversed(tables_to_convert):
         s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
