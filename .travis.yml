@@ -3,10 +3,13 @@ language: python
 cache:
   directories:
     - .tox
+    - .pytest_cache
     - tests/testdata
 python:
-  - "2.7"
   - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
 install:
   - pip install tox-travis
   - sh get_testdata.sh
