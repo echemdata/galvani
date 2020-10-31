@@ -9,7 +9,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
 
 setup(
     name='galvani',
-    version='0.1.0',
+    version='0.2.0',
     description='Open and process battery charger log data files',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -32,7 +32,7 @@ setup(
             'res2sqlite = galvani.res2sqlite:main',
         ],
     },
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     install_requires=['numpy'],
     tests_require=['pytest'],
 )
