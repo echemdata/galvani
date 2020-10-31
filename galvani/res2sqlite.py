@@ -5,26 +5,51 @@ import sqlite3
 import re
 import csv
 import argparse
+from copy import copy
 
 
 # The following scripts are adapted from the result of running
 # $ mdb-schema <result.res> oracle
 
-mdb_tables = ["Version_Table", "Global_Table", "Resume_Table",
-              "Channel_Normal_Table", "Channel_Statistic_Table",
-              "Auxiliary_Table", "Event_Table",
-              "Smart_Battery_Info_Table", "Smart_Battery_Data_Table"]
+mdb_tables = [
+    'Version_Table',
+    'Global_Table',
+    'Resume_Table',
+    'Channel_Normal_Table',
+    'Channel_Statistic_Table',
+    'Auxiliary_Table',
+    'Event_Table',
+    'Smart_Battery_Info_Table',
+    'Smart_Battery_Data_Table',
+]
+mdb_5_23_tables = [
+    'MCell_Aci_Data_Table',
+    'Aux_Global_Data_Table',
+    'Smart_Battery_Clock_Stretch_Table',
+]
+mdb_5_26_tables = [
+    'Can_BMS_Info_Table',
+    'Can_BMS_Data_Table',
+]
 
-mdb_tables_text = ["Version_Table", "Global_Table", "Event_Table",
-                   "Smart_Battery_Info_Table"]
-mdb_tables_numeric = ["Resume_Table", "Channel_Normal_Table",
-                      "Channel_Statistic_Table", "Auxiliary_Table",
-                      "Smart_Battery_Data_Table", 'MCell_Aci_Data_Table',
-                      'Aux_Global_Data_Table',
-                      'Smart_Battery_Clock_Stretch_Table']
-
-mdb_5_23_tables = ['MCell_Aci_Data_Table', 'Aux_Global_Data_Table',
-                   'Smart_Battery_Clock_Stretch_Table']
+mdb_tables_text = {
+    'Version_Table',
+    'Global_Table',
+    'Event_Table',
+    'Smart_Battery_Info_Table',
+    'Can_BMS_Info_Table',
+}
+mdb_tables_numeric = {
+    'Resume_Table',
+    'Channel_Normal_Table',
+    'Channel_Statistic_Table',
+    'Auxiliary_Table',
+    'Smart_Battery_Data_Table',
+    'MCell_Aci_Data_Table',
+    'Aux_Global_Data_Table',
+    'Smart_Battery_Clock_Stretch_Table',
+    'Can_BMS_Data_Table',
+}
 
 mdb_create_scripts = {
     "Version_Table": """
@@ -56,8 +81,17 @@ CREATE TABLE Global_Table
     Log_Aux_Data_Flag               INTEGER,
     Log_Event_Data_Flag             INTEGER,
     Log_Smart_Battery_Data_Flag     INTEGER,
+  -- The following items are in 5.26 but not in 5.23
+    Log_Can_BMS_Data_Flag           INTEGER DEFAULT NULL,
+    Software_Version                TEXT DEFAULT NULL,
+    Serial_Number                   TEXT DEFAULT NULL,
+    Schedule_Version                TEXT DEFAULT NULL,
+    MASS                            REAL DEFAULT NULL,
+    Specific_Capacity               REAL DEFAULT NULL,
+    Capacity                        REAL DEFAULT NULL,
+  -- Item_ID exists in all versions
     Item_ID                         TEXT,
-  -- Version 1.14 ends here, version 5.23 continues
+  -- These items are in 5.26 and 5.23 but not in 1.14
     Mapped_Aux_Conc_CNumber         INTEGER DEFAULT NULL,
     Mapped_Aux_DI_CNumber           INTEGER DEFAULT NULL,
     Mapped_Aux_DO_CNumber           INTEGER DEFAULT NULL
@@ -65,7 +99,7 @@ CREATE TABLE Global_Table
     "Resume_Table": """
 CREATE TABLE Resume_Table
  (
-    Test_ID         INTEGER REFERENCES Global_Table(Test_ID),
+    Test_ID         INTEGER PRIMARY KEY REFERENCES Global_Table(Test_ID),
     Step_Index      INTEGER,
     Cycle_Index     INTEGER,
     Channel_Status  INTEGER,
@@ -115,7 +149,8 @@ CREATE TABLE Channel_Normal_Table
     "dV/dt"                 REAL,
     Internal_Resistance     REAL,
     AC_Impedance            REAL,
-    ACI_Phase_Angle         REAL
+    ACI_Phase_Angle         REAL,
+    PRIMARY KEY (Test_ID, Data_Point)
 ); """,
     "Channel_Statistic_Table": """
 CREATE TABLE Channel_Statistic_Table
@@ -126,6 +161,7 @@ CREATE TABLE Channel_Statistic_Table
   -- Version 1.14 ends here, version 5.23 continues
     Charge_Time             REAL DEFAULT NULL,
     Discharge_Time          REAL DEFAULT NULL,
+    PRIMARY KEY (Test_ID, Data_Point),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
@@ -138,6 +174,7 @@ CREATE TABLE Auxiliary_Table
     Data_Type               INTEGER,
     X                       REAL,
     "dX/dt"                 REAL,
+    PRIMARY KEY (Test_ID, Data_Point, Auxiliary_Index),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
@@ -153,7 +190,7 @@ CREATE TABLE Event_Table
     "Smart_Battery_Info_Table":  """
 CREATE TABLE Smart_Battery_Info_Table
  (
-    Test_ID                 INTEGER REFERENCES Global_Table(Test_ID),
+    Test_ID                 INTEGER PRIMARY KEY REFERENCES Global_Table(Test_ID),
     ManufacturerDate        REAL,
     ManufacturerAccess      TEXT,
     SpecificationInfo       TEXT,
@@ -222,10 +259,14 @@ CREATE TABLE Smart_Battery_Data_Table
     ChargingCurrent         REAL DEFAULT NULL,
     ChargingVoltage         REAL DEFAULT NULL,
     ManufacturerData        REAL DEFAULT NULL,
+  -- Version 5.23 ends here, version 5.26 continues
+    BATMAN_Status           INTEGER DEFAULT NULL,
+    DTM_PDM_Status          INTEGER DEFAULT NULL,
+    PRIMARY KEY (Test_ID, Data_Point),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 ); """,
-    # The following tables are not present in version 1.14
+    # The following tables are not present in version 1.14, but are in 5.23
     'MCell_Aci_Data_Table': """
 CREATE TABLE MCell_Aci_Data_Table
  (
@@ -236,6 +277,7 @@ CREATE TABLE MCell_Aci_Data_Table
     Phase_Shift		REAL,
     Voltage			REAL,
     Current			REAL,
+    PRIMARY KEY (Test_ID, Data_Point, Cell_Index),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
 );""",
@@ -246,7 +288,8 @@ CREATE TABLE Aux_Global_Data_Table
     Auxiliary_Index	INTEGER,
     Data_Type		INTEGER,
     Nickname		TEXT,
-    Unit			TEXT
+    Unit			TEXT,
+    PRIMARY KEY (Channel_Index, Auxiliary_Index, Data_Type)
 );""",
     'Smart_Battery_Clock_Stretch_Table': """
 CREATE TABLE Smart_Battery_Clock_Stretch_Table
@@ -292,9 +335,32 @@ CREATE TABLE Smart_Battery_Clock_Stretch_Table
     VCELL3			    INTEGER,
     VCELL2			    INTEGER,
     VCELL1			    INTEGER,
+    PRIMARY KEY (Test_ID, Data_Point),
     FOREIGN KEY (Test_ID, Data_Point)
         REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
-);"""}
+);""",
+    # The following tables are not present in version 5.23, but are in 5.26
+    'Can_BMS_Info_Table': """
+CREATE TABLE "Can_BMS_Info_Table"
+ (
+    Channel_Index        INTEGER PRIMARY KEY,
+    CAN_Cfg_File_Name    TEXT,
+    CAN_Configuration    TEXT
+);
+""",
+    'Can_BMS_Data_Table': """
+CREATE TABLE "Can_BMS_Data_Table"
+ (
+    Test_ID              INTEGER,
+    Data_Point           INTEGER,
+    CAN_MV_Index         INTEGER,
+    Signal_Value_X       REAL,
+    PRIMARY KEY (Test_ID, Data_Point, CAN_MV_Index),
+    FOREIGN KEY (Test_ID, Data_Point)
+        REFERENCES Channel_Normal_Table (Test_ID, Data_Point)
+);
+""",
+}
 
 mdb_create_indices = {
     "Channel_Normal_Table": """
@@ -437,31 +503,68 @@ def mdb_get_data(s3db, filename, table):
         raise ValueError("'%s' is in neither mdb_tables_text nor mdb_tables_numeric" % table)
 
 
+def mdb_get_version(filename):
+    """Get the version number from an Arbin .res file.
+
+    Reads the Version_Table and parses the version from Version_Schema_Field.
+    """
+    print("Reading version number...")
+    try:
+        with sp.Popen(['mdb-export', filename, 'Version_Table'],
+                      bufsize=-1, stdin=sp.DEVNULL, stdout=sp.PIPE,
+                      universal_newlines=True) as mdb_sql:
+            mdb_csv = csv.reader(mdb_sql.stdout)
+            mdb_headers = next(mdb_csv)
+            mdb_values = next(mdb_csv)
+            try:
+                next(mdb_csv)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError('Version_Table of %s lists multiple versions' % filename)
+    except OSError as e:
+        if e.errno == 2:
+            raise RuntimeError('Could not locate the `mdb-export` executable. '
+                               'Check that mdbtools is properly installed.')
+        else:
+            raise
+    if 'Version_Schema_Field' not in mdb_headers:
+        raise ValueError('Version_Table of %s does not contain a Version_Schema_Field column'
+                         % filename)
+    version_fields = dict(zip(mdb_headers, mdb_values))
+    version_text = version_fields['Version_Schema_Field']
+    version_match = re.fullmatch('Results File ([.0-9]+)', version_text)
+    if not version_match:
+        raise ValueError('File version "%s" did not match expected format' % version_text)
+    version_string = version_match.group(1)
+    version_tuple = tuple(map(int, version_string.split('.')))
+    return version_tuple
+
+
 def convert_arbin_to_sqlite(input_file, output_file):
     """Read data from an Arbin .res data file and write to a sqlite file.
 
     Any data currently in the sqlite file will be erased!
     """
+    arbin_version = mdb_get_version(input_file)
+
     s3db = sqlite3.connect(output_file)
 
-    for table in reversed(mdb_tables + mdb_5_23_tables):
+    tables_to_convert = copy(mdb_tables)
+    if arbin_version >= (5, 23):
+        tables_to_convert.extend(mdb_5_23_tables)
+    if arbin_version >= (5, 26):
+        tables_to_convert.extend(mdb_5_26_tables)
+
+    for table in reversed(tables_to_convert):
         s3db.execute('DROP TABLE IF EXISTS "%s";' % table)
 
-    for table in mdb_tables:
+    for table in tables_to_convert:
         s3db.executescript(mdb_create_scripts[table])
         mdb_get_data(s3db, input_file, table)
         if table in mdb_create_indices:
             print("Creating indices for %s..." % table)
             s3db.executescript(mdb_create_indices[table])
-
-    csr = s3db.execute("SELECT Version_Schema_Field FROM Version_Table;")
-    version_text, = csr.fetchone()
-    if (version_text == "Results File 5.23"):
-        for table in mdb_5_23_tables:
-            s3db.executescript(mdb_create_scripts[table])
-            mdb_get_data(input_file, table)
-            if table in mdb_create_indices:
-                s3db.executescript(mdb_create_indices[table])
 
     print("Creating helper table for capacity and energy totals...")
     s3db.executescript(helper_table_script)

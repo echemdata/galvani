@@ -32,7 +32,7 @@ def test_convert_Arbin_no_mdbtools(testdata_dir, tmpdir):
 
 
 @pytest.mark.skipif(not have_mdbtools, reason='Reading the Arbin file requires MDBTools')
-@pytest.mark.parametrize('basename', ['arbin1'])
+@pytest.mark.parametrize('basename', ['arbin1', 'UM34_Test005E'])
 def test_convert_Arbin_to_sqlite_function(testdata_dir, tmpdir, basename):
     """Convert an Arbin file to SQLite using the functional interface."""
     res_file = os.path.join(testdata_dir, basename + '.res')
