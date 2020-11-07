@@ -1,0 +1,5 @@
+# Arbin data files
+*.res filter=lfs diff=lfs merge=lfs -text
+# Bio-Logic data files
+*.mpr filter=lfs diff=lfs merge=lfs -text
+*.mpt filter=lfs diff=lfs merge=lfs -text
