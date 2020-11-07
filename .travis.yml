@@ -4,7 +4,6 @@ cache:
   directories:
     - .tox
     - .pytest_cache
-    - tests/testdata
 python:
   - "3.6"
   - "3.7"
@@ -12,5 +11,4 @@ python:
   - "3.9"
 install:
   - pip install tox-travis
-  - sh get_testdata.sh
 script: tox
