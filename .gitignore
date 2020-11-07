@@ -36,5 +36,11 @@ nosetests.xml
 .project
 .pydevproject
 
-# Data for testing
-testdata
+# Compressed files used to transfer test data
+*.gz
+*.bz2
+*.xz
+*.zip
+*.tar
+*.tgz
+*.tbz2
