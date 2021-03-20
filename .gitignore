@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2013-2017 Christopher Kerr <chris.kerr@mykolab.ch>
+
 *.py[cod]
 
 # C extensions

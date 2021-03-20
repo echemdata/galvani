@@ -1,1 +1,2 @@
+# SPDX-FileCopyrightText: 2017 Christopher Kerr <chris.kerr@mykolab.ch>
 numpy

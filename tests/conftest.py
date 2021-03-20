@@ -1,5 +1,7 @@
 """Helpers for pytest tests."""
 
+# SPDX-FileCopyrightText: 2019 Christopher Kerr <chris.kerr@mykolab.ch>
+
 import os
 
 import pytest

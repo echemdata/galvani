@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2014-2020 Christopher Kerr <chris.kerr@mykolab.ch>
+
 ## Test data are posted on FigShare, listed in this article
 # http://figshare.com/articles/galvani_test_data/1228760
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# SPDX-FileCopyrightText: 2013-2020 Christopher Kerr <chris.kerr@mykolab.ch>
+
 import os.path
 import re
 from datetime import datetime

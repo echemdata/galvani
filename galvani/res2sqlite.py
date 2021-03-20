@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# SPDX-FileCopyrightText: 2013-2020 Christopher Kerr <chris.kerr@mykolab.ch>
+
 import subprocess as sp
 import sqlite3
 import re
