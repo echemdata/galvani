@@ -3,6 +3,8 @@ galvani
 
 <!---
 SPDX-FileCopyrightText: 2013-2020 Christopher Kerr, Peter Attia
+
+SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 Read proprietary file formats from electrochemical test stations
