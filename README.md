@@ -1,6 +1,10 @@
 galvani
 =======
 
+<!---
+SPDX-FileCopyrightText: 2013-2020 Christopher Kerr, Peter Attia
+-->
+
 Read proprietary file formats from electrochemical test stations
 
 ## Bio-Logic .mpr files ##
