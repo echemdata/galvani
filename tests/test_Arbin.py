@@ -1,5 +1,9 @@
 """Tests for loading Arbin .res files."""
 
+# SPDX-FileCopyrightText: 2019-2020 Christopher Kerr <chris.kerr@mykolab.ch>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os
 import sqlite3
 import subprocess
