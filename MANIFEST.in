@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2021 Christopher Kerr
+# SPDX-License-Identifier: CC0-1.0
+
+recursive-include LICENSES *.txt
+include README.md
+
+# The GitHub CodeQL file is not included in the tarball,
+# so its licence does not need to be included either
+exclude LICENSES/MIT.txt

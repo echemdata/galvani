@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """Code to read in data files from Bio-Logic instruments"""
 
+# SPDX-FileCopyrightText: 2013-2020 Christopher Kerr, "bcolsen"
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 __all__ = ['MPTfileCSV', 'MPTfile']
 
 import re

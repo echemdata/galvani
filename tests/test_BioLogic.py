@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# SPDX-FileCopyrightText: 2013-2020 Christopher Kerr <chris.kerr@mykolab.ch>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os.path
 import re
 from datetime import datetime

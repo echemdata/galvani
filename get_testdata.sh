@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2014-2020 Christopher Kerr <chris.kerr@mykolab.ch>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 ## Test data are posted on FigShare, listed in this article
 # http://figshare.com/articles/galvani_test_data/1228760
 
