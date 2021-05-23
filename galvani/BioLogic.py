@@ -416,10 +416,18 @@ class MPRfile:
 
         if maybe_log_module:
             log_module, = maybe_log_module
-            try:
-                tm = time.strptime(log_module['date'].decode('ascii'), '%m/%d/%y')
-            except ValueError:
-                tm = time.strptime(log_module['date'].decode('ascii'), '%m-%d-%y')
+            date_string = log_module['date'].decode('ascii')
+            date_formats = ['%m/%d/%y', '%m-%d-%y', '%m.%d.%y']
+            for date_format in date_formats:
+                try:
+                    tm = time.strptime(date_string, date_format)
+                except ValueError:
+                    continue
+                else:
+                    break
+            else:
+                raise ValueError(f'Could not parse timestamp {date_string!r}'
+                                 f' with any of the formats {date_formats}')
             self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
 
             # There is a timestamp at either 465 or 469 bytes
