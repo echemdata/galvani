@@ -6,7 +6,7 @@
 
 import os.path
 import re
-from datetime import datetime
+from datetime import date, datetime
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -75,6 +75,24 @@ def test_colID_to_dtype(colIDs, expected):
     expected_dtype = np.dtype(expected)
     dtype, flags_dict = BioLogic.VMPdata_dtype_from_colIDs(colIDs)
     assert dtype == expected_dtype
+
+
+@pytest.mark.parametrize('data, expected', [
+    ('02/23/17', date(2017, 2, 23)),
+    ('10-03-05', date(2005, 10, 3)),
+    ('11.12.20', date(2020, 11, 12)),
+    (b'01/02/03', date(2003, 1, 2)),
+    ('13.08.07', ValueError),
+    ('03-04/05', ValueError),
+])
+def test_parse_BioLogic_date(data, expected):
+    """Test the parse_BioLogic_date function."""
+    if isinstance(expected, type) and issubclass(expected, Exception):
+        with pytest.raises(expected):
+            BioLogic.parse_BioLogic_date(data)
+        return
+    result = BioLogic.parse_BioLogic_date(data)
+    assert result == expected
 
 
 @pytest.mark.parametrize('filename, startdate, enddate', [
