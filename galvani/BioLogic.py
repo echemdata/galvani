@@ -154,6 +154,7 @@ VMPdata_colID_dtype_map = {
     20: ('control/mA', '<f4'),
     23: ('dQ/mA.h', '<f8'),  # Same as 7?
     24: ('cycle number', '<f8'),
+    26: ('Rapp/Ohm', '<f4'),
     32: ('freq/Hz', '<f4'),
     33: ('|Ewe|/V', '<f4'),
     34: ('|I|/A', '<f4'),
@@ -162,6 +163,7 @@ VMPdata_colID_dtype_map = {
     37: ('Re(Z)/Ohm', '<f4'),
     38: ('-Im(Z)/Ohm', '<f4'),
     39: ('I Range', '<u2'),
+    69: ('R/Ohm', '<f4'),
     70: ('P/W', '<f4'),
     74: ('Energy/W.h', '<f8'),
     75: ('Analog OUT/V', '<f4'),

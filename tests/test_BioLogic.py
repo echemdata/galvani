@@ -87,6 +87,7 @@ def test_colID_to_dtype(colIDs, expected):
     ('bio_logic6.mpr', '2012-09-11', None),
     # C019P-0ppb-A_C01.mpr stores the date in a different format
     ('C019P-0ppb-A_C01.mpr', '2019-03-14', '2019-03-14'),
+    ('Rapp_Error.mpr', '2010-12-02', '2010-12-02'),
 ])
 def test_MPR_dates(testdata_dir, filename, startdate, enddate):
     """Check that the start and end dates in .mpr files are read correctly."""
