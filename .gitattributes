@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 Christopher Kerr <chris.kerr@mykolab.ch>
+# SPDX-License-Identifier: CC0-1.0
+
 # Arbin data files
 *.res filter=lfs diff=lfs merge=lfs -text
 # Bio-Logic data files
