@@ -3,8 +3,6 @@ Upstream-Name: Galvani
 Upstream-Contact: Christopher Kerr <chris.kerr@mykolab.ch>
 Source: https://github.com/echemdata/galvani
 
-# Sample paragraph, commented out:
-#
-# Files: src/*
-# Copyright: $YEAR $NAME <$CONTACT>
-# License: ...
+Files: tests/testdata/*
+Copyright: 2010-2014 Christopher Kerr <chris.kerr@mykolab.ch>
+License: CC-BY-4.0
