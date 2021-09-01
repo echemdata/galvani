@@ -246,6 +246,26 @@ VMPdata_colID_flag_map = {
 }
 
 
+def parse_BioLogic_date(date_text):
+    """Parse a date from one of the various formats used by Bio-Logic files."""
+    date_formats = ['%m/%d/%y', '%m-%d-%y', '%m.%d.%y']
+    if isinstance(date_text, bytes):
+        date_string = date_text.decode('ascii')
+    else:
+        date_string = date_text
+    for date_format in date_formats:
+        try:
+            tm = time.strptime(date_string, date_format)
+        except ValueError:
+            continue
+        else:
+            break
+    else:
+        raise ValueError(f'Could not parse timestamp {date_string!r}'
+                         f' with any of the formats {date_formats}')
+    return date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+
+
 def VMPdata_dtype_from_colIDs(colIDs):
     """Get a numpy record type from a list of column ID numbers.
 
@@ -399,12 +419,7 @@ class MPRfile:
         self.version = int(data_module['version'])
         self.cols = column_types
         self.npts = n_data_points
-
-        try:
-            tm = time.strptime(settings_mod['date'].decode('ascii'), '%m/%d/%y')
-        except ValueError:
-            tm = time.strptime(settings_mod['date'].decode('ascii'), '%m-%d-%y')
-        self.startdate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+        self.startdate = parse_BioLogic_date(settings_mod['date'])
 
         if maybe_loop_module:
             loop_module, = maybe_loop_module
@@ -418,11 +433,7 @@ class MPRfile:
 
         if maybe_log_module:
             log_module, = maybe_log_module
-            try:
-                tm = time.strptime(log_module['date'].decode('ascii'), '%m/%d/%y')
-            except ValueError:
-                tm = time.strptime(log_module['date'].decode('ascii'), '%m-%d-%y')
-            self.enddate = date(tm.tm_year, tm.tm_mon, tm.tm_mday)
+            self.enddate = parse_BioLogic_date(log_module['date'])
 
             # There is a timestamp at either 465 or 469 bytes
             # I can't find any reason why it is one or the other in any
