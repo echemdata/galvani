@@ -106,6 +106,7 @@ def test_parse_BioLogic_date(data, expected):
     # C019P-0ppb-A_C01.mpr stores the date in a different format
     ('C019P-0ppb-A_C01.mpr', '2019-03-14', '2019-03-14'),
     ('Rapp_Error.mpr', '2010-12-02', '2010-12-02'),
+    ('Ewe_Error.mpr', '2021-11-18', '2021-11-19'),
 ])
 def test_MPR_dates(testdata_dir, filename, startdate, enddate):
     """Check that the start and end dates in .mpr files are read correctly."""
