@@ -209,6 +209,7 @@ VMPdata_colID_dtype_map = {
     433: ('-Im(Zwe-ce)/Ohm', '<f4'),
     434: ('(Q-Qo)/C', '<f4'),
     435: ('dQ/C', '<f4'),
+    438: ('step time/s', '<f8'),
     441: ('<Ecv>/V', '<f4'),
     462: ('Temperature/°C', '<f4'),
     467: ('Q charge/discharge/mA.h', '<f8'),
