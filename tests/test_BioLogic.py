@@ -165,7 +165,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
                               mpt["Ewe/V"],
                               decimal=6)  # 32 bit float precision
 
-    assert_field_matches("dQ/mA.h", decimal=17)  # 64 bit float precision
+    assert_field_matches("dQ/mA.h", decimal=16)  # 64 bit float precision
     assert_field_matches("P/W", decimal=10)  # 32 bit float precision for 1.xxE-5
     assert_field_matches("I/mA", decimal=6)  # 32 bit float precision
 
@@ -173,7 +173,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     assert_field_matches("(Q-Qo)/C", decimal=6)  # 32 bit float precision
 
     try:
-        assert timestamp_from_comments(comments) == mpr.timestamp
+        assert timestamp_from_comments(comments) == mpr.timestamp.replace(microsecond=0)
     except AttributeError:
         pass
 
@@ -197,7 +197,7 @@ def test_MPR_matches_MPT(testdata_dir, basename):
     binpath = os.path.join(testdata_dir, basename + '.mpr')
     txtpath = os.path.join(testdata_dir, basename + '.mpt')
     mpr = MPRfile(binpath)
-    mpt, comments = MPTfile(txtpath)
+    mpt, comments = MPTfile(txtpath, encoding='latin1')
     assert_MPR_matches_MPT(mpr, mpt, comments)
 
 
