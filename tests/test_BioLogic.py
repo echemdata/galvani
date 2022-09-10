@@ -186,6 +186,7 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     # bio_logic5 and bio_logic6 are special cases
     'CV_C01',
     '121_CA_455nm_6V_30min_C01',
+    '020-formation_CB5',
 ])
 def test_MPR_matches_MPT(testdata_dir, basename):
     """Check the MPR parser against the MPT parser.
