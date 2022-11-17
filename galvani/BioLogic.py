@@ -155,6 +155,7 @@ VMPdata_colID_dtype_map = {
     23: ('dQ/mA.h', '<f8'),  # Same as 7?
     24: ('cycle number', '<f8'),
     26: ('Rapp/Ohm', '<f4'),
+    27: ('Ewe-Ece/V', '<f4'),
     32: ('freq/Hz', '<f4'),
     33: ('|Ewe|/V', '<f4'),
     34: ('|I|/A', '<f4'),
