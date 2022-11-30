@@ -33,7 +33,7 @@ def fieldname_to_dtype(fieldname):
         return (fieldname, np.float_)
     elif fieldname in ("Q charge/discharge/mA.h", "step time/s",
                        "Q charge/mA.h", "Q discharge/mA.h",
-                       "Efficiency/%", "Capacity/mA.h")
+                       "Temperature/°C", "Efficiency/%", "Capacity/mA.h")
         return (fieldname, np.float_)
     elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
@@ -41,8 +41,15 @@ def fieldname_to_dtype(fieldname):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
         return ("I/mA", np.float_)
-    elif fieldname in ("Ewe/V", "<Ewe>/V"):
+    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V"):
         return ("Ewe/V", np.float_)
+    elif fieldname.endswith(("/s", "/Hz", "/deg",
+                             "/W", "/mW", "/W.h", "/mW.h",
+                             "/A", "/mA", "/A.h", "/mA.h",
+                             "/V", "/mV",
+                             "/F", "/mF", "/uF",
+                             "/C", "/Ohm",)):
+        return (fieldname, np.float_)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
 
@@ -66,7 +73,7 @@ def MPTfile(file_or_path, encoding='ascii'):
         mpt_file = file_or_path
 
     magic = next(mpt_file)
-    if magic != b'EC-Lab ASCII FILE\r\n':
+    if magic not in (b'EC-Lab ASCII FILE\r\n', b'BT-Lab ASCII FILE\r\n'):
         raise ValueError("Bad first line for EC-Lab file: '%s'" % magic)
 
     nb_headers_match = re.match(rb'Nb header lines : (\d+)\s*$',
@@ -213,6 +220,7 @@ VMPdata_colID_dtype_map = {
     433: ('-Im(Zwe-ce)/Ohm', '<f4'),
     434: ('(Q-Qo)/C', '<f4'),
     435: ('dQ/C', '<f4'),
+    438: ('step time/s', '<f8'),
     441: ('<Ecv>/V', '<f4'),
     462: ('Temperature/°C', '<f4'),
     467: ('Q charge/discharge/mA.h', '<f8'),
