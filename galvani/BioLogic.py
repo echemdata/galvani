@@ -27,9 +27,13 @@ def fieldname_to_dtype(fieldname):
                        "counter inc."):
         return (fieldname, np.bool_)
     elif fieldname in ("time/s", "P/W", "(Q-Qo)/mA.h", "x", "control/V",
-                       "control/V/mA", "(Q-Qo)/C", "dQ/C", "freq/Hz",
-                       "|Ewe|/V", "|I|/A", "Phase(Z)/deg", "|Z|/Ohm",
-                       "Re(Z)/Ohm", "-Im(Z)/Ohm"):
+                       "control/mA", "control/V/mA", "(Q-Qo)/C", "dQ/C",
+                       "freq/Hz", "|Ewe|/V", "|I|/A", "Phase(Z)/deg",
+                       "|Z|/Ohm", "Re(Z)/Ohm", "-Im(Z)/Ohm"):
+        return (fieldname, np.float_)
+    elif fieldname in ("Q charge/discharge/mA.h", "step time/s",
+                       "Q charge/mA.h", "Q discharge/mA.h",
+                       "Efficiency/%", "Capacity/mA.h")
         return (fieldname, np.float_)
     elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
@@ -233,6 +237,11 @@ VMPdata_colID_dtype_map = {
     495: ('|I h5|/A', '<f4'),
     496: ('|I h6|/A', '<f4'),
     497: ('|I h7|/A', '<f4'),
+    498: ('Q charge/mA.h', '<f8'),
+    499: ('Q discharge/mA.h', '<f8'),
+    500: ('step time/s', '<f8'),
+    501: ('Efficiency/%', '<f8'),
+    502: ('Capacity/mA.h', '<f8'),
 }
 
 # These column IDs define flags which are all stored packed in a single byte
