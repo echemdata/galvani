@@ -207,6 +207,7 @@ VMPdata_colID_dtype_map = {
     431: ('|Zwe-ce|/Ohm', '<f4'),
     432: ('Re(Zwe-ce)/Ohm', '<f4'),
     433: ('-Im(Zwe-ce)/Ohm', '<f4'),
+    438: ('step time/s','<f8'),
     434: ('(Q-Qo)/C', '<f4'),
     435: ('dQ/C', '<f4'),
     441: ('<Ecv>/V', '<f4'),
