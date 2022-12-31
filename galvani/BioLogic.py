@@ -33,7 +33,7 @@ def fieldname_to_dtype(fieldname):
         return (fieldname, np.float_)
     elif fieldname in ("Q charge/discharge/mA.h", "step time/s",
                        "Q charge/mA.h", "Q discharge/mA.h",
-                       "Temperature/°C", "Efficiency/%", "Capacity/mA.h")
+                       "Temperature/°C", "Efficiency/%", "Capacity/mA.h"):
         return (fieldname, np.float_)
     elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
         return (fieldname, np.int_)
