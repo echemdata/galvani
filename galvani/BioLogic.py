@@ -426,11 +426,11 @@ class MPRfile:
             raise ValueError("Unrecognised version for data module: %d" %
                              data_module['version'])
 
-        assert(not any(remaining_headers))
+        assert not any(remaining_headers)
 
         self.dtype, self.flags_dict = VMPdata_dtype_from_colIDs(column_types)
         self.data = np.frombuffer(main_data, dtype=self.dtype)
-        assert(self.data.shape[0] == n_data_points)
+        assert self.data.shape[0] == n_data_points
 
         # No idea what these 'column types' mean or even if they are actually
         # column types at all
