@@ -250,6 +250,8 @@ VMPdata_colID_dtype_map = {
     500: ('step time/s', '<f8'),
     501: ('Efficiency/%', '<f8'),
     502: ('Capacity/mA.h', '<f8'),
+    505: ('Rdc/Ohm', '<f4'),
+    509: ('Acir/Dcir Control', '<u1'),
 }
 
 # These column IDs define flags which are all stored packed in a single byte
