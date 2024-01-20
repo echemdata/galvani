@@ -258,10 +258,10 @@ VMPdata_colID_dtype_map = {
     4: ("time/s", "<f8"),
     5: ("control/V/mA", "<f4"),
     6: ("Ewe/V", "<f4"),
-    7: ("dq/mA.h", "<f8"),
+    7: ("dQ/mA.h", "<f8"),
     8: ("I/mA", "<f4"),  # 8 is either I or <I> ??
     9: ("Ece/V", "<f4"),
-    11: ("<I>/mA", "<f8"),
+    11: ("I/mA", "<f8"),
     13: ("(Q-Qo)/mA.h", "<f8"),
     16: ("Analog IN 1/V", "<f4"),
     19: ("control/V", "<f4"),
@@ -299,30 +299,8 @@ VMPdata_colID_dtype_map = {
     169: ("Cs/µF", "<f4"),
     172: ("Cp/µF", "<f4"),
     173: ("Cp-2/µF-2", "<f4"),
-    174: ("<Ewe>/V", "<f4"),
-    178: ("(Q-Qo)/C", "<f4"),
-    179: ("dQ/C", "<f4"),
-    211: ("Q charge/discharge/mA.h", "<f8"),
-    212: ("half cycle", "<u4"),
-    213: ("z cycle", "<u4"),
-    217: ("THD Ewe/%", "<f4"),
-    218: ("THD I/%", "<f4"),
-    220: ("NSD Ewe/%", "<f4"),
-    221: ("NSD I/%", "<f4"),
-    223: ("NSR Ewe/%", "<f4"),
-    224: ("NSR I/%", "<f4"),
-    230: ("|Ewe h2|/V", "<f4"),
-    231: ("|Ewe h3|/V", "<f4"),
-    232: ("|Ewe h4|/V", "<f4"),
-    233: ("|Ewe h5|/V", "<f4"),
-    234: ("|Ewe h6|/V", "<f4"),
-    235: ("|Ewe h7|/V", "<f4"),
-    236: ("|I h2|/A", "<f4"),
-    237: ("|I h3|/A", "<f4"),
-    238: ("|I h4|/A", "<f4"),
-    239: ("|I h5|/A", "<f4"),
-    240: ("|I h6|/A", "<f4"),
-    241: ("|I h7|/A", "<f4"),
+    174: ("Ewe/V", "<f4"),
+    241: ("|E1|/V", "<f4"),
     242: ("|E2|/V", "<f4"),
     271: ("Phase(Z1) / deg", "<f4"),
     272: ("Phase(Z2) / deg", "<f4"),
@@ -471,7 +449,9 @@ def read_VMP_modules(fileobj, read_module_data=True):
         if len(module_magic) == 0:  # end of file
             break
         elif module_magic != b"MODULE":
-            raise ValueError("Found %r, expecting start of new VMP MODULE" % module_magic)
+            raise ValueError(
+                "Found %r, expecting start of new VMP MODULE" % module_magic
+            )
 
         # Excpecting EC-Lab version < 11.50
         VMPmodule_hdr = VMPmodule_hdr_v1
@@ -497,11 +477,7 @@ def read_VMP_modules(fileobj, read_module_data=True):
                     current module: %s
                     length read: %d
                     length expected: %d"""
-                    % (
-                        hdr_dict["longname"],
-                        len(hdr_dict["data"]),
-                        hdr_dict["length"],
-                    )
+                    % (hdr_dict["longname"], len(hdr_dict["data"]), hdr_dict["length"])
                 )
             yield hdr_dict
         else:
@@ -593,7 +569,7 @@ class MPRfile:
         if maybe_loop_module:
             (loop_module,) = maybe_loop_module
             if loop_module["version"] == 0:
-                self.loop_index = np.frombuffer(loop_module["data"][4:], dtype="<u4")
+                self.loop_index = np.fromstring(loop_module["data"][4:], dtype="<u4")
                 self.loop_index = np.trim_zeros(self.loop_index, "b")
             else:
                 raise ValueError(
@@ -607,11 +583,18 @@ class MPRfile:
             # There is a timestamp at either 465 or 469 bytes
             # I can't find any reason why it is one or the other in any
             # given file
-            ole_timestamp1 = np.frombuffer(log_module["data"][465:], dtype="<f8", count=1)
-            ole_timestamp2 = np.frombuffer(log_module["data"][469:], dtype="<f8", count=1)
-            ole_timestamp3 = np.frombuffer(log_module["data"][473:], dtype="<f8", count=1)
-            ole_timestamp4 = np.frombuffer(log_module["data"][585:], dtype="<f8", count=1)
-
+            ole_timestamp1 = np.frombuffer(
+                log_module["data"][465:], dtype="<f8", count=1
+            )
+            ole_timestamp2 = np.frombuffer(
+                log_module["data"][469:], dtype="<f8", count=1
+            )
+            ole_timestamp3 = np.frombuffer(
+                log_module["data"][473:], dtype="<f8", count=1
+            )
+            ole_timestamp4 = np.frombuffer(
+                log_module["data"][585:], dtype="<f8", count=1
+            )
             if ole_timestamp1 > 40000 and ole_timestamp1 < 50000:
                 ole_timestamp = ole_timestamp1
             elif ole_timestamp2 > 40000 and ole_timestamp2 < 50000:
