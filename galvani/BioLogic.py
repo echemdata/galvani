@@ -9,7 +9,7 @@ __all__ = ["MPTfileCSV", "MPTfile"]
 
 import re
 import csv
-from os import SEEK_SET, path
+from os import SEEK_SET
 import time
 from datetime import date, datetime, timedelta
 from collections import defaultdict, OrderedDict
@@ -554,7 +554,7 @@ class MPRfile:
             # If EC-Lab version >= 11.50, column_types is [0 1 0 3 0 174...] instead of [1 3 174...]
             if np.frombuffer(data_module["data"][5:6], dtype="u1").item():
                 column_types = np.frombuffer(data_module["data"][5:], dtype="u1", count=n_columns)
-                remaining_headers = data_module["data"][5 + n_columns : 100]
+                remaining_headers = data_module["data"][5 + n_columns:100]
                 main_data = data_module["data"][100:]
             else:
                 column_types = np.frombuffer(
@@ -563,7 +563,7 @@ class MPRfile:
                 column_types = column_types[1::2]  # suppressing zeros in column types array
                 # remaining headers should be empty except for bytes 5 + n_columns * 2
                 # and 1006 which are sometimes == 1
-                remaining_headers = data_module["data"][6 + n_columns * 2 : 1006]
+                remaining_headers = data_module["data"][6 + n_columns * 2:1006]
                 main_data = data_module["data"][1007:]
         elif data_module["version"] in [2, 3]:
             column_types = np.frombuffer(data_module["data"][5:], dtype="<u2", count=n_columns)
@@ -572,7 +572,7 @@ class MPRfile:
                 num_bytes_before = 406  # version 3 added `\x01` to the start
             else:
                 num_bytes_before = 405
-            remaining_headers = data_module["data"][5 + 2 * n_columns : 405]
+            remaining_headers = data_module["data"][5 + 2 * n_columns:405]
             main_data = data_module["data"][num_bytes_before:]
         else:
             raise ValueError("Unrecognised version for data module: %d" % data_module["version"])
