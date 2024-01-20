@@ -507,7 +507,7 @@ class MPRfile:
             column_types = np.frombuffer(
                 data_module["data"][5:], dtype="u1", count=n_columns
             )
-            remaining_headers = data_module["data"][5 + n_columns : 100]
+            remaining_headers = data_module["data"][5 + n_columns:100]
             main_data = data_module["data"][100:]
         elif data_module["version"] in [2, 3]:
             column_types = np.frombuffer(
@@ -518,7 +518,7 @@ class MPRfile:
                 num_bytes_before = 406  # version 3 added `\x01` to the start
             else:
                 num_bytes_before = 405
-            remaining_headers = data_module["data"][5 + 2 * n_columns : 405]
+            remaining_headers = data_module["data"][5 + 2 * n_columns:405]
             main_data = data_module["data"][num_bytes_before:]
         else:
             raise ValueError(

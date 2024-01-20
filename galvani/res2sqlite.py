@@ -456,7 +456,7 @@ def mdb_get_data_text(s3db, filename, table):
             while len(mdb_output) > 0:
                 insert_match = insert_pattern.match(mdb_output)
                 s3db.execute(insert_match.group())
-                mdb_output = mdb_output[insert_match.end() :]
+                mdb_output = mdb_output[insert_match.end():]
                 mdb_output += mdb_sql.stdout.read()
             s3db.commit()
 
