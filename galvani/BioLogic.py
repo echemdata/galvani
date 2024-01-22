@@ -48,6 +48,13 @@ def fieldname_to_dtype(fieldname):
         "|Z|/Ohm",
         "Re(Z)/Ohm",
         "-Im(Z)/Ohm",
+        "Re(M)",
+        "Im(M)",
+        "|M|",
+        "Re(Permittivity)",
+        "Im(Permittivity)",
+        "|Permittivity|",
+        "Tan(Delta)",
     ):
         return (fieldname, np.float_)
     elif fieldname in (
@@ -60,13 +67,13 @@ def fieldname_to_dtype(fieldname):
         "Capacity/mA.h",
     ):
         return (fieldname, np.float_)
-    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
+    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle", "z cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
         return ("I/mA", np.float_)
-    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V"):
+    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V", "<Ewe/V>"):
         return ("Ewe/V", np.float_)
     elif fieldname.endswith(
         (
@@ -87,8 +94,13 @@ def fieldname_to_dtype(fieldname):
             "/mF",
             "/uF",
             "/µF",
+            "/nF",
             "/C",
             "/Ohm",
+            "/Ohm-1",
+            "/Ohm.cm",
+            "/mS/cm",
+            "/%",
         )
     ):
         return (fieldname, np.float_)
@@ -258,10 +270,10 @@ VMPdata_colID_dtype_map = {
     4: ("time/s", "<f8"),
     5: ("control/V/mA", "<f4"),
     6: ("Ewe/V", "<f4"),
-    7: ("dQ/mA.h", "<f8"),
+    7: ("dq/mA.h", "<f8"),
     8: ("I/mA", "<f4"),  # 8 is either I or <I> ??
     9: ("Ece/V", "<f4"),
-    11: ("I/mA", "<f8"),
+    11: ("<I>/mA", "<f8"),
     13: ("(Q-Qo)/mA.h", "<f8"),
     16: ("Analog IN 1/V", "<f4"),
     19: ("control/V", "<f4"),
@@ -300,8 +312,30 @@ VMPdata_colID_dtype_map = {
     169: ("Cs/µF", "<f4"),
     172: ("Cp/µF", "<f4"),
     173: ("Cp-2/µF-2", "<f4"),
-    174: ("Ewe/V", "<f4"),
-    241: ("|E1|/V", "<f4"),
+    174: ("<Ewe>/V", "<f4"),
+    178: ("(Q-Qo)/C", "<f4"),
+    179: ("dQ/C", "<f4"),
+    211: ("Q charge/discharge/mA.h", "<f8"),
+    212: ("half cycle", "<u4"),
+    213: ("z cycle", "<u4"),
+    217: ("THD Ewe/%", "<f4"),
+    218: ("THD I/%", "<f4"),
+    220: ("NSD Ewe/%", "<f4"),
+    221: ("NSD I/%", "<f4"),
+    223: ("NSR Ewe/%", "<f4"),
+    224: ("NSR I/%", "<f4"),
+    230: ("|Ewe h2|/V", "<f4"),
+    231: ("|Ewe h3|/V", "<f4"),
+    232: ("|Ewe h4|/V", "<f4"),
+    233: ("|Ewe h5|/V", "<f4"),
+    234: ("|Ewe h6|/V", "<f4"),
+    235: ("|Ewe h7|/V", "<f4"),
+    236: ("|I h2|/A", "<f4"),
+    237: ("|I h3|/A", "<f4"),
+    238: ("|I h4|/A", "<f4"),
+    239: ("|I h5|/A", "<f4"),
+    240: ("|I h6|/A", "<f4"),
+    241: ("|I h7|/A", "<f4"),
     242: ("|E2|/V", "<f4"),
     271: ("Phase(Z1) / deg", "<f4"),
     272: ("Phase(Z2) / deg", "<f4"),
@@ -570,7 +604,7 @@ class MPRfile:
         if maybe_loop_module:
             (loop_module,) = maybe_loop_module
             if loop_module["version"] == 0:
-                self.loop_index = np.fromstring(loop_module["data"][4:], dtype="<u4")
+                self.loop_index = np.frombuffer(loop_module["data"][4:], dtype="<u4")
                 self.loop_index = np.trim_zeros(self.loop_index, "b")
             else:
                 raise ValueError(
