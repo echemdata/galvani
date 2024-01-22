@@ -48,6 +48,13 @@ def fieldname_to_dtype(fieldname):
         "|Z|/Ohm",
         "Re(Z)/Ohm",
         "-Im(Z)/Ohm",
+        "Re(M)",
+        "Im(M)",
+        "|M|",
+        "Re(Permittivity)",
+        "Im(Permittivity)",
+        "|Permittivity|",
+        "Tan(Delta)",
     ):
         return (fieldname, np.float_)
     elif fieldname in (
@@ -60,13 +67,13 @@ def fieldname_to_dtype(fieldname):
         "Capacity/mA.h",
     ):
         return (fieldname, np.float_)
-    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
+    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle", "z cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
         return ("I/mA", np.float_)
-    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V"):
+    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V", "<Ewe/V>"):
         return ("Ewe/V", np.float_)
     elif fieldname.endswith(
         (
@@ -87,8 +94,13 @@ def fieldname_to_dtype(fieldname):
             "/mF",
             "/uF",
             "/µF",
+            "/nF",
             "/C",
             "/Ohm",
+            "/Ohm-1",
+            "/Ohm.cm",
+            "/mS/cm",
+            "/%",
         )
     ):
         return (fieldname, np.float_)
