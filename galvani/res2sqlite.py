@@ -439,7 +439,8 @@ CREATE VIEW IF NOT EXISTS Capacity_View
 def mdb_get_data_text(s3db, filename, table):
     print("Reading %s..." % table)
     insert_pattern = re.compile(
-        r'INSERT INTO "\w+" \([^)]+?\) VALUES \(("[^"]*"|[^")])+?\);\n', re.IGNORECASE
+        r"""INSERT INTO "\w+" \([^)]+?\) VALUES (\((('[^']*')|"[^"]*"|[^')])+?\),?\s*)+;\n""",
+        re.IGNORECASE,
     )
     try:
         # Initialize values to avoid NameError in except clause
