@@ -209,12 +209,17 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
     except AttributeError:
         pass
 
+
 def assert_MPR_matches_MPT_v2(mpr, mpt, comments):
     """
-    Asserts that the fields in the MPR.data ar the same as in the MPT. Modified from assert_MPR_matches_MPT.
-    Automatically converts dtype from MPT data to dtype from MPR data before comparing the columns.
-    Speficicity for EIS_indicators : these fields are valid only at f<100kHz so their values are replaced
-    by -1 or 0 at high frequency in the MPT file, this is not the case in the MPR.data.
+    Asserts that the fields in the MPR.data ar the same as in the MPT.
+
+    Modified from assert_MPR_matches_MPT. Automatically converts dtype from MPT data
+    to dtype from MPR data before comparing the columns.
+
+    Special case for EIS_indicators: these fields are valid only at f<100kHz so their
+    values are replaced by -1 or 0 at high frequency in the MPT file, this is not the
+    case in the MPR data.
 
     Parameters
     ----------
@@ -293,6 +298,7 @@ def assert_MPR_matches_MPT_v2(mpr, mpt, comments):
     except AttributeError:
         pass
 
+
 @pytest.mark.parametrize(
     "basename",
     [
@@ -335,6 +341,7 @@ def test_MPR6_matches_MPT6(testdata_dir):
     mpt, comments = MPTfile(os.path.join(testdata_dir, "bio_logic6.mpt"))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
     assert_MPR_matches_MPT(mpr, mpt, comments)
+
 
 @pytest.mark.parametrize(
     "basename_v1150",
