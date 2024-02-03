@@ -257,10 +257,10 @@ VMPmodule_hdr_v2 = np.dtype(
     [
         ("shortname", "S10"),
         ("longname", "S25"),
-        ("max points", "<u4"),
+        ("max length", "<u4"),
         ("length", "<u4"),
         ("version", "<u4"),
-        ("unknown2", "<u4"),
+        ("unknown2", "<u4"),  # 10 for set, log and loop, 11 for data
         ("date", "S8"),
     ]
 )
@@ -553,7 +553,6 @@ class MPRfile:
             raise ValueError("Invalid magic for .mpr file: %s" % magic)
 
         modules = list(read_VMP_modules(mpr_file))
-        mpr_file.close()  # close the mpr.file after reading all of it
 
         self.modules = modules
         (settings_mod,) = (m for m in modules if m["shortname"] == b"VMP Set   ")
