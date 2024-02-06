@@ -9,7 +9,7 @@ import re
 from datetime import date, datetime
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 import pytest
 
 from galvani import BioLogic, MPTfile, MPRfile
@@ -210,6 +210,95 @@ def assert_MPR_matches_MPT(mpr, mpt, comments):
         pass
 
 
+def assert_MPR_matches_MPT_v2(mpr, mpt, comments):
+    """
+    Asserts that the fields in the MPR.data ar the same as in the MPT.
+
+    Modified from assert_MPR_matches_MPT. Automatically converts dtype from MPT data
+    to dtype from MPR data before comparing the columns.
+
+    Special case for EIS_indicators: these fields are valid only at f<100kHz so their
+    values are replaced by -1 or 0 at high frequency in the MPT file, this is not the
+    case in the MPR data.
+
+    Parameters
+    ----------
+    mpr : MPRfile
+        Data extracted with the MPRfile class.
+    mpt : np.array
+        Data extracted with MPTfile method.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    def assert_field_matches(fieldname):
+        EIS_quality_indicators = [
+            "THD Ewe/%",
+            "NSD Ewe/%",
+            "NSR Ewe/%",
+            "|Ewe h2|/V",
+            "|Ewe h3|/V",
+            "|Ewe h4|/V",
+            "|Ewe h5|/V",
+            "|Ewe h6|/V",
+            "|Ewe h7|/V",
+            "THD I/%",
+            "NSD I/%",
+            "NSR I/%",
+            "|I h2|/A",
+            "|I h3|/A",
+            "|I h4|/A",
+            "|I h5|/A",
+            "|I h6|/A",
+            "|I h7|/A",
+        ]
+
+        if fieldname in EIS_quality_indicators:  # EIS quality indicators only valid for f < 100kHz
+            index_inf_100k = np.where(mpr.data["freq/Hz"] < 100000)[0]
+            assert_allclose(
+                mpr.data[index_inf_100k][fieldname],
+                mpt[index_inf_100k][fieldname].astype(mpr.data[fieldname].dtype),
+            )
+        elif fieldname == "<Ewe>/V":
+            assert_allclose(
+                mpr.data[fieldname],
+                mpt["Ewe/V"].astype(mpr.data[fieldname].dtype),
+            )
+        elif fieldname == "<I>/mA":
+            assert_allclose(
+                mpr.data[fieldname],
+                mpt["I/mA"].astype(mpr.data[fieldname].dtype),
+            )
+        elif fieldname == "dq/mA.h":
+            assert_allclose(
+                mpr.data[fieldname],
+                mpt["dQ/mA.h"].astype(mpr.data[fieldname].dtype),
+            )
+        else:
+            assert_allclose(
+                mpr.data[fieldname],
+                mpt[fieldname].astype(mpr.data[fieldname].dtype),
+            )
+
+    def assert_field_exact(fieldname):
+        if fieldname in mpr.dtype.fields:
+            assert_array_equal(mpr.data[fieldname], mpt[fieldname])
+
+    for key in mpr.flags_dict.keys():
+        assert_array_equal(mpr.get_flag(key), mpt[key])
+
+    for d in mpr.dtype.descr[1:]:
+        assert_field_matches(d[0])
+
+    try:
+        assert timestamp_from_comments(comments) == mpr.timestamp.replace(microsecond=0)
+    except AttributeError:
+        pass
+
+
 @pytest.mark.parametrize(
     "basename",
     [
@@ -252,3 +341,20 @@ def test_MPR6_matches_MPT6(testdata_dir):
     mpt, comments = MPTfile(os.path.join(testdata_dir, "bio_logic6.mpt"))
     mpr.data = mpr.data[:958]  # .mpt file is incomplete
     assert_MPR_matches_MPT(mpr, mpt, comments)
+
+
+@pytest.mark.parametrize(
+    "basename_v1150",
+    ["v1150_CA", "v1150_CP", "v1150_GCPL", "v1150_GEIS", "v1150_MB", "v1150_OCV", "v1150_PEIS"],
+)
+def test_MPR_matches_MPT_v1150(testdata_dir, basename_v1150):
+    """Check the MPR parser against the MPT parser.
+
+    Load a binary .mpr file and a text .mpt file which should contain
+    exactly the same data. Check that the loaded data actually match.
+    """
+    binpath = os.path.join(testdata_dir, "v1150", basename_v1150 + ".mpr")
+    txtpath = os.path.join(testdata_dir, "v1150", basename_v1150 + ".mpt")
+    mpr = MPRfile(binpath)
+    mpt, comments = MPTfile(txtpath, encoding="latin1")
+    assert_MPR_matches_MPT_v2(mpr, mpt, comments)

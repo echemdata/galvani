@@ -48,6 +48,13 @@ def fieldname_to_dtype(fieldname):
         "|Z|/Ohm",
         "Re(Z)/Ohm",
         "-Im(Z)/Ohm",
+        "Re(M)",
+        "Im(M)",
+        "|M|",
+        "Re(Permittivity)",
+        "Im(Permittivity)",
+        "|Permittivity|",
+        "Tan(Delta)",
     ):
         return (fieldname, np.float_)
     elif fieldname in (
@@ -60,13 +67,13 @@ def fieldname_to_dtype(fieldname):
         "Capacity/mA.h",
     ):
         return (fieldname, np.float_)
-    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle"):
+    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle", "z cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float_)
     elif fieldname in ("I/mA", "<I>/mA"):
         return ("I/mA", np.float_)
-    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V"):
+    elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V", "<Ewe/V>"):
         return ("Ewe/V", np.float_)
     elif fieldname.endswith(
         (
@@ -86,8 +93,14 @@ def fieldname_to_dtype(fieldname):
             "/F",
             "/mF",
             "/uF",
+            "/µF",
+            "/nF",
             "/C",
             "/Ohm",
+            "/Ohm-1",
+            "/Ohm.cm",
+            "/mS/cm",
+            "/%",
         )
     ):
         return (fieldname, np.float_)
@@ -230,7 +243,7 @@ def MPTfileCSV(file_or_path):
     return mpt_csv, comments
 
 
-VMPmodule_hdr = np.dtype(
+VMPmodule_hdr_v1 = np.dtype(
     [
         ("shortname", "S10"),
         ("longname", "S25"),
@@ -240,15 +253,27 @@ VMPmodule_hdr = np.dtype(
     ]
 )
 
+VMPmodule_hdr_v2 = np.dtype(
+    [
+        ("shortname", "S10"),
+        ("longname", "S25"),
+        ("max length", "<u4"),
+        ("length", "<u4"),
+        ("version", "<u4"),
+        ("unknown2", "<u4"),  # 10 for set, log and loop, 11 for data
+        ("date", "S8"),
+    ]
+)
+
 # Maps from colID to a tuple defining a numpy dtype
 VMPdata_colID_dtype_map = {
     4: ("time/s", "<f8"),
     5: ("control/V/mA", "<f4"),
     6: ("Ewe/V", "<f4"),
-    7: ("dQ/mA.h", "<f8"),
+    7: ("dq/mA.h", "<f8"),
     8: ("I/mA", "<f4"),  # 8 is either I or <I> ??
     9: ("Ece/V", "<f4"),
-    11: ("I/mA", "<f8"),
+    11: ("<I>/mA", "<f8"),
     13: ("(Q-Qo)/mA.h", "<f8"),
     16: ("Analog IN 1/V", "<f4"),
     19: ("control/V", "<f4"),
@@ -267,7 +292,7 @@ VMPdata_colID_dtype_map = {
     39: ("I Range", "<u2"),
     69: ("R/Ohm", "<f4"),
     70: ("P/W", "<f4"),
-    74: ("Energy/W.h", "<f8"),
+    74: ("|Energy|/W.h", "<f8"),
     75: ("Analog OUT/V", "<f4"),
     76: ("<I>/mA", "<f4"),
     77: ("<Ewe>/V", "<f4"),
@@ -287,8 +312,30 @@ VMPdata_colID_dtype_map = {
     169: ("Cs/µF", "<f4"),
     172: ("Cp/µF", "<f4"),
     173: ("Cp-2/µF-2", "<f4"),
-    174: ("Ewe/V", "<f4"),
-    241: ("|E1|/V", "<f4"),
+    174: ("<Ewe>/V", "<f4"),
+    178: ("(Q-Qo)/C", "<f4"),
+    179: ("dQ/C", "<f4"),
+    211: ("Q charge/discharge/mA.h", "<f8"),
+    212: ("half cycle", "<u4"),
+    213: ("z cycle", "<u4"),
+    217: ("THD Ewe/%", "<f4"),
+    218: ("THD I/%", "<f4"),
+    220: ("NSD Ewe/%", "<f4"),
+    221: ("NSD I/%", "<f4"),
+    223: ("NSR Ewe/%", "<f4"),
+    224: ("NSR I/%", "<f4"),
+    230: ("|Ewe h2|/V", "<f4"),
+    231: ("|Ewe h3|/V", "<f4"),
+    232: ("|Ewe h4|/V", "<f4"),
+    233: ("|Ewe h5|/V", "<f4"),
+    234: ("|Ewe h6|/V", "<f4"),
+    235: ("|Ewe h7|/V", "<f4"),
+    236: ("|I h2|/A", "<f4"),
+    237: ("|I h3|/A", "<f4"),
+    238: ("|I h4|/A", "<f4"),
+    239: ("|I h5|/A", "<f4"),
+    240: ("|I h6|/A", "<f4"),
+    241: ("|I h7|/A", "<f4"),
     242: ("|E2|/V", "<f4"),
     271: ("Phase(Z1) / deg", "<f4"),
     272: ("Phase(Z2) / deg", "<f4"),
@@ -441,10 +488,17 @@ def read_VMP_modules(fileobj, read_module_data=True):
             raise ValueError(
                 "Found %r, expecting start of new VMP MODULE" % module_magic
             )
+        VMPmodule_hdr = VMPmodule_hdr_v1
 
+        # Reading headers binary information
         hdr_bytes = fileobj.read(VMPmodule_hdr.itemsize)
         if len(hdr_bytes) < VMPmodule_hdr.itemsize:
             raise IOError("Unexpected end of file while reading module header")
+
+        # Checking if EC-Lab version is >= 11.50
+        if hdr_bytes[35:39] == b"\xff\xff\xff\xff":
+            VMPmodule_hdr = VMPmodule_hdr_v2
+            hdr_bytes += fileobj.read(VMPmodule_hdr_v2.itemsize - VMPmodule_hdr_v1.itemsize)
 
         hdr = np.frombuffer(hdr_bytes, dtype=VMPmodule_hdr, count=1)
         hdr_dict = dict(((n, hdr[n][0]) for n in VMPmodule_hdr.names))
@@ -457,7 +511,11 @@ def read_VMP_modules(fileobj, read_module_data=True):
                     current module: %s
                     length read: %d
                     length expected: %d"""
-                    % (hdr_dict["longname"], len(hdr_dict["data"]), hdr_dict["length"])
+                    % (
+                        hdr_dict["longname"],
+                        len(hdr_dict["data"]),
+                        hdr_dict["length"],
+                    )
                 )
             yield hdr_dict
         else:
@@ -495,6 +553,7 @@ class MPRfile:
             raise ValueError("Invalid magic for .mpr file: %s" % magic)
 
         modules = list(read_VMP_modules(mpr_file))
+
         self.modules = modules
         (settings_mod,) = (m for m in modules if m["shortname"] == b"VMP Set   ")
         (data_module,) = (m for m in modules if m["shortname"] == b"VMP data  ")
@@ -505,15 +564,22 @@ class MPRfile:
         n_columns = np.frombuffer(data_module["data"][4:5], dtype="u1").item()
 
         if data_module["version"] == 0:
-            column_types = np.frombuffer(
-                data_module["data"][5:], dtype="u1", count=n_columns
-            )
-            remaining_headers = data_module["data"][5 + n_columns:100]
-            main_data = data_module["data"][100:]
+            # If EC-Lab version >= 11.50, column_types is [0 1 0 3 0 174...] instead of [1 3 174...]
+            if np.frombuffer(data_module["data"][5:6], dtype="u1").item():
+                column_types = np.frombuffer(data_module["data"][5:], dtype="u1", count=n_columns)
+                remaining_headers = data_module["data"][5 + n_columns:100]
+                main_data = data_module["data"][100:]
+            else:
+                column_types = np.frombuffer(
+                    data_module["data"][5:], dtype="u1", count=n_columns * 2
+                )
+                column_types = column_types[1::2]  # suppressing zeros in column types array
+                # remaining headers should be empty except for bytes 5 + n_columns * 2
+                # and 1006 which are sometimes == 1
+                remaining_headers = data_module["data"][6 + n_columns * 2:1006]
+                main_data = data_module["data"][1007:]
         elif data_module["version"] in [2, 3]:
-            column_types = np.frombuffer(
-                data_module["data"][5:], dtype="<u2", count=n_columns
-            )
+            column_types = np.frombuffer(data_module["data"][5:], dtype="<u2", count=n_columns)
             # There are bytes of data before the main array starts
             if data_module["version"] == 3:
                 num_bytes_before = 406  # version 3 added `\x01` to the start
@@ -542,7 +608,7 @@ class MPRfile:
         if maybe_loop_module:
             (loop_module,) = maybe_loop_module
             if loop_module["version"] == 0:
-                self.loop_index = np.fromstring(loop_module["data"][4:], dtype="<u4")
+                self.loop_index = np.frombuffer(loop_module["data"][4:], dtype="<u4")
                 self.loop_index = np.trim_zeros(self.loop_index, "b")
             else:
                 raise ValueError(
