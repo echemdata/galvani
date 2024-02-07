@@ -9,7 +9,7 @@ __all__ = ["MPTfileCSV", "MPTfile"]
 
 import re
 import csv
-from os import SEEK_SET
+from os import SEEK_SET, path
 import time
 from datetime import date, datetime, timedelta
 from collections import defaultdict, OrderedDict
@@ -522,7 +522,83 @@ def read_VMP_modules(fileobj, read_module_data=True):
             yield hdr_dict
             fileobj.seek(hdr_dict["offset"] + hdr_dict["length"], SEEK_SET)
 
+def loop_from_file(file: str, encoding: str ="latin1"):
+    """
+    When an experiment is still running and it includes loops, 
+    a _LOOP.txt file is temporarily created to progressively store the indexes of new loops.
+    This function reads the file and creates the loop_index array for MPRfile initialization
 
+    Parameters
+    ----------
+    file : str
+        Path of the loop file.
+    encoding : str, optional
+        Encoding of the text file. The default is "latin1".
+
+    Raises
+    ------
+    ValueError
+        If the file does not start with "VMP EXPERIMENT LOOP INDEXES".
+
+    Returns
+    -------
+    loop_index : np.array
+        Indexes of data points that start a new loop.
+
+    """
+    with open(file, "r", encoding=encoding) as f:
+        line = f.readline().strip()
+        if line != LOOP_MAGIC:
+            raise ValueError("Invalid magic for LOOP.txt file")
+        loop_index = np.array([int(line) for line in f], dtype="u4")
+
+    return loop_index
+
+
+def timestamp_from_file(file: str, encoding: str ="latin1"):
+    """
+    When an experiment is still running, a .mpl file is temporarily created to store information 
+    that will be added in the log module and will be appended to the data module in the .mpr file at the end of experiment 
+    This function reads the file and extracts the experimental starting date and time as a timestamp for MPRfile initialization
+
+    Parameters
+    ----------
+    file : str
+        Path of the log file.
+    encoding : str, optional
+        Encoding of the text file. The default is "latin1".
+
+    Raises
+    ------
+    ValueError
+        If the file does not start with "EC-Lab LOG FILE" or "BT-Lab LOG FILE".
+
+    Returns
+    -------
+    timestamp
+        Date and time of the start of data acquisition
+    """
+    with open(file, "r", encoding=encoding) as f:
+        line = f.readline().strip()
+        if line not in LOG_MAGIC:
+            raise ValueError("Invalid magic for .mpl file")
+        log = f.read()
+    start = tuple(
+        map(
+            int,
+            re.findall(
+                r"Acquisition started on : (\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)\.(\d+)",
+                "".join(log),
+            )[0],
+        )
+    )
+    return datetime(
+        int(start[2]), start[0], start[1], start[3], start[4], start[5], start[6] * 1000
+    )
+
+
+LOG_MAGIC = "EC-Lab LOG FILEBT-Lab LOG FILE"
+LOOP_MAGIC = "VMP EXPERIMENT LOOP INDEXES"
 MPR_MAGIC = b"BIO-LOGIC MODULAR FILE\x1a".ljust(48) + b"\x00\x00\x00\x00"
 
 
@@ -546,6 +622,8 @@ class MPRfile:
         self.loop_index = None
         if isinstance(file_or_path, str):
             mpr_file = open(file_or_path, "rb")
+            loop_file = file_or_path[:-4] + "_LOOP.txt"  # loop file for running experiment
+            log_file = file_or_path[:-1] + "l"  # log file for runnning experiment
         else:
             mpr_file = file_or_path
         magic = mpr_file.read(len(MPR_MAGIC))
@@ -614,6 +692,11 @@ class MPRfile:
                 raise ValueError(
                     "Unrecognised version for data module: %d" % data_module["version"]
                 )
+        else:
+            if path.isfile(loop_file):
+                self.loop_index = loop_from_file(loop_file)
+                if self.loop_index[-1] < n_data_points:
+                    self.loop_index = np.append(self.loop_index, n_data_points)
 
         if maybe_log_module:
             (log_module,) = maybe_log_module
@@ -657,6 +740,10 @@ class MPRfile:
                     + "    End date: %s\n" % self.enddate
                     + "    Timestamp: %s\n" % self.timestamp
                 )
+        else:
+            if path.isfile(log_file):
+                self.timestamp = timestamp_from_file(log_file)
+                self.enddate = None
 
     def get_flag(self, flagname):
         if flagname in self.flags_dict:
