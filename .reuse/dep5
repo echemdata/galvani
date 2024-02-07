@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Galvani
+Upstream-Contact: Christopher Kerr <chris.kerr@mykolab.ch>
+Source: https://github.com/echemdata/galvani
+
+Files: tests/testdata/*
+Copyright: 2010-2014 Christopher Kerr <chris.kerr@mykolab.ch>
+License: CC-BY-4.0
