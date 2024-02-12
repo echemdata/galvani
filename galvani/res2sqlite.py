@@ -571,12 +571,24 @@ def mdb_get_version(filename):
     return version_tuple
 
 
-def convert_arbin_to_sqlite(input_file, output_file):
+def convert_arbin_to_sqlite(input_file, output_file=None):
     """Read data from an Arbin .res data file and write to a sqlite file.
 
-    Any data currently in the sqlite file will be erased!
+    Any data currently in an sqlite file at `output_file` will be erased!
+
+    Parameters:
+        input_file (str): The path to the Arbin .res file to read from.
+        output_file (str or None): The path to the sqlite file to write to; if None,
+            return a `sqlite3.Connection` into an in-memory database.
+
+    Returns:
+        None or sqlite3.Connection
+
     """
     arbin_version = mdb_get_version(input_file)
+
+    if output_file is None:
+        output_file = ":memory:"
 
     s3db = sqlite3.connect(output_file)
 
@@ -601,6 +613,11 @@ def convert_arbin_to_sqlite(input_file, output_file):
 
     print("Vacuuming database...")
     s3db.executescript("VACUUM; ANALYZE;")
+
+    if output_file == ":memory:":
+        return s3db
+
+    s3db.close()
 
 
 def main(argv=None):
