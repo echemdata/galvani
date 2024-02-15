@@ -604,12 +604,16 @@ def read_VMP_modules(fileobj, read_module_data=True):
         if len(module_magic) == 0:  # end of file
             break
         elif module_magic != b"MODULE":
+            if isinstance(file_or_path, str):
+                fileobj.close()
             raise ValueError("Found %r, expecting start of new VMP MODULE" % module_magic)
         VMPmodule_hdr = VMPmodule_hdr_v1
 
         # Reading headers binary information
         hdr_bytes = fileobj.read(VMPmodule_hdr.itemsize)
         if len(hdr_bytes) < VMPmodule_hdr.itemsize:
+            if isinstance(file_or_path, str):
+                fileobj.close()
             raise IOError("Unexpected end of file while reading module header")
 
         # Checking if EC-Lab version is >= 11.50
@@ -623,6 +627,8 @@ def read_VMP_modules(fileobj, read_module_data=True):
         if read_module_data:
             hdr_dict["data"] = fileobj.read(hdr_dict["length"])
             if len(hdr_dict["data"]) != hdr_dict["length"]:
+                if isinstance(file_or_path, str):
+                    fileobj.close()
                 raise IOError(
                     """Unexpected end of file while reading data
                     current module: %s
@@ -670,9 +676,14 @@ class MPRfile:
             mpr_file = file_or_path
         magic = mpr_file.read(len(MPR_MAGIC))
         if magic != MPR_MAGIC:
+            if isinstance(file_or_path, str):
+                mpr_file.close()
             raise ValueError("Invalid magic for .mpr file: %s" % magic)
 
         modules = list(read_VMP_modules(mpr_file))
+        if isinstance(file_or_path, str):
+            mpr_file.close()
+
         self.modules = modules
         maybe_set_module = [m for m in modules if m["shortname"] == b"VMP Set   "]
         (data_module,) = (m for m in modules if m["shortname"] == b"VMP data  ")
