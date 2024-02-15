@@ -15,6 +15,7 @@ import pytest
 from galvani import BioLogic, MPTfile, MPRfile
 from galvani.BioLogic import MPTfileCSV  # not exported
 
+import warnings
 
 def test_open_MPT(testdata_dir):
     mpt1, comments = MPTfile(os.path.join(testdata_dir, "bio_logic1.mpt"))
@@ -147,7 +148,7 @@ def test_MPR_dates(testdata_dir, filename, startdate, enddate):
     if enddate:
         assert mpr.enddate.strftime("%Y-%m-%d") == enddate
     else:
-        assert not hasattr(mpr, "enddate")
+        assert mpr.enddate is None
 
 
 def test_open_MPR_fails_for_bad_file(testdata_dir):
@@ -245,6 +246,15 @@ def assert_MPR_matches_MPT_v2(mpr, mpt, comments):
             "|Ewe h5|/V",
             "|Ewe h6|/V",
             "|Ewe h7|/V",
+            "THD Ece/%",
+            "NSD Ece/%",
+            "NSR Ece/%",
+            "|Ece h2|/V",
+            "|Ece h3|/V",
+            "|Ece h4|/V",
+            "|Ece h5|/V",
+            "|Ece h6|/V",
+            "|Ece h7|/V",
             "THD I/%",
             "NSD I/%",
             "NSR I/%",
@@ -257,11 +267,20 @@ def assert_MPR_matches_MPT_v2(mpr, mpt, comments):
         ]
 
         if fieldname in EIS_quality_indicators:  # EIS quality indicators only valid for f < 100kHz
-            index_inf_100k = np.where(mpr.data["freq/Hz"] < 100000)[0]
-            assert_allclose(
-                mpr.data[index_inf_100k][fieldname],
-                mpt[index_inf_100k][fieldname].astype(mpr.data[fieldname].dtype),
-            )
+            if len(mpr.data) == 1:
+                if mpt["THD Ewe/%"] != -1:
+                    assert_allclose(
+                        mpr.data[fieldname],
+                        mpt[fieldname].astype(mpr.data[fieldname].dtype),
+                    )
+            else:
+                indexes = np.where(mpt["THD Ewe/%"] != -1)[0]
+
+                assert_allclose(
+                    mpr.data[indexes][fieldname],
+                    mpt[indexes][fieldname].astype(mpr.data[fieldname].dtype),
+                )
+
         elif fieldname == "<Ewe>/V":
             assert_allclose(
                 mpr.data[fieldname],
