@@ -276,6 +276,7 @@ VMPdata_colID_dtype_map = {
     11: ("<I>/mA", "<f8"),
     13: ("(Q-Qo)/mA.h", "<f8"),
     16: ("Analog IN 1/V", "<f4"),
+    17: ("Analog IN 1/V", "<f4"),  # Unclear if this column is duplicated in the underlying data
     19: ("control/V", "<f4"),
     20: ("control/mA", "<f4"),
     23: ("dQ/mA.h", "<f8"),  # Same as 7?
