@@ -58,14 +58,9 @@ def test_convert_Arbin_to_sqlite_function_in_memory(testdata_dir, tmpdir, basena
     """Convert an Arbin file to an in-memory SQLite database."""
     res_file = os.path.join(testdata_dir, basename + ".res")
     conn = None
-    try:
-        conn = res2sqlite.convert_arbin_to_sqlite(res_file)
-        assert conn is not None
+    with res2sqlite.convert_arbin_to_sqlite(res_file) as conn:
         csr = conn.execute("SELECT * FROM Channel_Normal_Table;")
         csr.fetchone()
-    finally:
-        if conn is not None:
-            conn.close()
 
 
 @pytest.mark.skipif(
