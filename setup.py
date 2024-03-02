@@ -12,7 +12,7 @@ with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
 
 setup(
     name="galvani",
-    version="0.3.0",
+    version="0.4.1",
     description="Open and process battery charger log data files",
     long_description=readme,
     long_description_content_type="text/markdown",
