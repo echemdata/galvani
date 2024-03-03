@@ -53,6 +53,16 @@ def test_convert_Arbin_to_sqlite_function(testdata_dir, tmpdir, basename):
         csr.fetchone()
 
 
+@pytest.mark.parametrize("basename", ["arbin1", "UM34_Test005E"])
+def test_convert_Arbin_to_sqlite_function_in_memory(testdata_dir, tmpdir, basename):
+    """Convert an Arbin file to an in-memory SQLite database."""
+    res_file = os.path.join(testdata_dir, basename + ".res")
+    conn = None
+    with res2sqlite.convert_arbin_to_sqlite(res_file) as conn:
+        csr = conn.execute("SELECT * FROM Channel_Normal_Table;")
+        csr.fetchone()
+
+
 @pytest.mark.skipif(
     not have_mdbtools, reason="Reading the Arbin file requires MDBTools"
 )
