@@ -9,6 +9,23 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 Read proprietary file formats from electrochemical test stations.
 
+> [!WARNING]
+> A note about test files and Git LFS:
+>
+> This project uses Git Large File Storage (LFS) to store its test files,
+> however the LFS quota provided by GitHub is frequently exceeded. 
+> This means that anyone cloning the repository with LFS installed will get
+> failures unless they set the `GIT_LFS_SKIP_SMUDGE=1` environment variable when
+> cloning. 
+> The full test data from the last release can always be obtained by
+> downloading the GitHub release archives (tar or zip), at
+> https://github.com/echemdata/galvani/releases/latest
+>
+> If you wish to add test files, please ensure they are as small as possible,
+> and take care that your tests work locally without the need for the LFS files.
+> Ideally, you could commit them to your fork when making a PR, and then they
+> can be converted to LFS files as part of the review.
+
 # Usage
 
 ## Bio-Logic .mpr files
