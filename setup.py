@@ -36,6 +36,6 @@ setup(
         ],
     },
     python_requires=">=3.6",
-    install_requires=["numpy"],
+    install_requires=["numpy<2"],
     tests_require=["pytest"],
 )
