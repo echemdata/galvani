@@ -56,7 +56,7 @@ def fieldname_to_dtype(fieldname):
         "|Permittivity|",
         "Tan(Delta)",
     ):
-        return (fieldname, np.float_)
+        return (fieldname, np.float64)
     elif fieldname in (
         "Q charge/discharge/mA.h",
         "step time/s",
@@ -66,15 +66,15 @@ def fieldname_to_dtype(fieldname):
         "Efficiency/%",
         "Capacity/mA.h",
     ):
-        return (fieldname, np.float_)
+        return (fieldname, np.float64)
     elif fieldname in ("cycle number", "I Range", "Ns", "half cycle", "z cycle"):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
-        return ("dQ/mA.h", np.float_)
+        return ("dQ/mA.h", np.float64)
     elif fieldname in ("I/mA", "<I>/mA"):
-        return ("I/mA", np.float_)
+        return ("I/mA", np.float64)
     elif fieldname in ("Ewe/V", "<Ewe>/V", "Ecell/V", "<Ewe/V>"):
-        return ("Ewe/V", np.float_)
+        return ("Ewe/V", np.float64)
     elif fieldname.endswith(
         (
             "/s",
@@ -103,7 +103,7 @@ def fieldname_to_dtype(fieldname):
             "/%",
         )
     ):
-        return (fieldname, np.float_)
+        return (fieldname, np.float64)
     else:
         raise ValueError("Invalid column header: %s" % fieldname)
 
