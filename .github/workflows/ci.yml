@@ -38,12 +38,10 @@ jobs:
       # care should be taken to also test new files locally first
       # Tests missing these files in the CI should still fail.
       - name: Download static files from last release for testing
-        uses: robinraju/release-downloader@v1
+        uses: robinraju/release-downloader@v1.12
         with:
           latest: true
-          tarBall: false
-          fileName: "galvani-*.gz"
-          zipBall: false
+          tarBall: true
           out-file-path: /home/runner/work/last-release
           extract: true
 
