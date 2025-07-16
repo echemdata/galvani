@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 > [!NOTE]  
 > This repository is an approximate mirror of https://codeberg.org/echemdata/galvani (originally developed at https://github.com/echemdata/galvani), though the syncing is not automatic. 
-> Versions deployed to PyPI package from this repository as the [`galvani-mirror`](https://pypi.org/project/galvani-mirror) may not match those of the `galvani` package itself. Documentation may still contain out of date references to the original repository.
+> Versions deployed to PyPI package from this repository as the [`datalab-org-galvani-mirror`](https://pypi.org/project/datalab-org-galvani) may not match those of the `galvani` package itself. Documentation may still contain out of date references to the original repository.
 > It is unlikely new features will be developed in this mirror, changes will only involve build system, deployment and testing improvements, so please direct your development attention to the codeberg repo linked above.
 
 Read proprietary file formats from electrochemical test stations.
@@ -49,13 +49,13 @@ This functionality requires [MDBTools](https://github.com/mdbtools/mdbtools) to 
 The latest galvani releases can be installed from [PyPI](https://pypi.org/project/galvani-mirror/) via
 
 ```shell
-pip install galvani
+pip install datalab-org-galvani
 ```
 
 The latest development version can be installed with `pip` directly from GitHub (see note about git-lfs below):
 
 ```shell
-GIT_LFS_SKIP_SMUDGE=1 pip install git+https://github.com/echemdata/galvani
+GIT_LFS_SKIP_SMUDGE=1 pip install git+https://github.com/datalab-org/galvani-mirror
 ```
 
 ## Development installation and contributing 
