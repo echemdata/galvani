@@ -560,7 +560,7 @@ class MPRfile:
     enddate - The date when the experiment finished
     """
 
-    def __init__(self, file_or_path, error_on_unknown_column: bool = True):
+    def __init__(self, file_or_path, error_on_unknown_column: bool = False):
         """Pass an EC-lab .mpr file to be parsed.
 
         Parameters:
