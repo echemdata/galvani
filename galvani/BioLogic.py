@@ -650,11 +650,15 @@ class MPRfile:
                             dtypes[ind] = (col, perm[unknown_col_ind])
 
                 try:
-                    self.dtype = np.dtype(dtypes)
-                    self.data = np.frombuffer(main_data, dtype=self.dtype)
-                    break
+                    trial_dtype = np.dtype(dtypes)
+                    trial_data = np.frombuffer(main_data, dtype=trial_dtype)
                 except ValueError:
                     continue
+                if trial_data.shape[0] != n_data_points:
+                    continue
+                self.dtype = trial_dtype
+                self.data = trial_data
+                break
             else:
                 raise RuntimeError(
                     "Unable to read data for unknown columns %s with any of the common dtypes %s",
