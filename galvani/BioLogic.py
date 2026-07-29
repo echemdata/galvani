@@ -70,7 +70,14 @@ def fieldname_to_dtype(fieldname):
         "Capacity/mA.h",
     ):
         return (fieldname, np.float64)
-    elif fieldname in ("cycle number", "I Range", "Ns", "half cycle", "z cycle"):
+    elif fieldname in (
+        "cycle number",
+        "I Range",
+        "Ns",
+        "half cycle",
+        "z cycle",
+        "Acir/Dcir Control",
+    ):
         return (fieldname, np.int_)
     elif fieldname in ("dq/mA.h", "dQ/mA.h"):
         return ("dQ/mA.h", np.float64)
@@ -393,6 +400,8 @@ VMPdata_colID_dtype_map = {
     500: ("step time/s", "<f8"),
     501: ("Efficiency/%", "<f8"),
     502: ("Capacity/mA.h", "<f8"),
+    249: ("Rdc/Ohm", "<f4"),
+    253: ("Acir/Dcir Control", "<u1"),
     505: ("Rdc/Ohm", "<f4"),
     509: ("Acir/Dcir Control", "<u1"),
 }
